@@ -1,0 +1,6 @@
+*
+!images/
+!images/.gitkeep
+!videos/
+!videos/.gitkeep
+!.gitignore

@@ -1,0 +1,21 @@
+.gallery-card .thumb { height: 340px; }
+
+.mode-toggle {
+    padding: .3rem;
+    background: #e8eef6;
+    border-radius: 999px;
+}
+.mode-toggle .btn {
+    min-width: 7rem;
+    border: 0;
+    border-radius: 999px;
+}
+.mode-toggle .btn.active {
+    background: var(--wt-blue);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(15, 39, 71, .22);
+}
+
+@media (max-width: 767.98px) {
+    .gallery-card .thumb { height: 240px; }
+}

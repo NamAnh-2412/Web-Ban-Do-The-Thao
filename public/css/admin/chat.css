@@ -1,0 +1,17 @@
+.chat-thread {
+    max-height: 32rem;
+    overflow-y: auto;
+}
+.chat-bubble {
+    max-width: 75%;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
+.chat-bubble-mine {
+    color: #fff;
+    background: var(--admin-primary);
+}
+.chat-bubble-store {
+    background: #eef0f5;
+}
+.chat-body { white-space: pre-wrap; word-break: break-word; }

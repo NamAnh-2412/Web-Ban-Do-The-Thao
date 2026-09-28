@@ -1,0 +1,10 @@
+*
+!private/
+!public/
+!media/
+!media/.gitignore
+!media/images/
+!media/images/.gitkeep
+!media/videos/
+!media/videos/.gitkeep
+!.gitignore
