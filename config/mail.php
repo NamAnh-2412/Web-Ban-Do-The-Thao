@@ -39,12 +39,12 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            'scheme' => ($mailScheme = trim((string) env('MAIL_SCHEME'), " \t\n\r\0\x0B\"")) !== '' ? $mailScheme : null,
             'url' => env('MAIL_URL'),
-            'host' => env('MAIL_HOST', '127.0.0.1'),
-            'port' => env('MAIL_PORT', 2525),
-            'username' => env('MAIL_USERNAME'),
-            'password' => env('MAIL_PASSWORD'),
+            'host' => trim((string) env('MAIL_HOST', '127.0.0.1')),
+            'port' => (int) env('MAIL_PORT', 2525),
+            'username' => trim((string) env('MAIL_USERNAME')),
+            'password' => preg_replace('/\s+/', '', (string) env('MAIL_PASSWORD')) ?: null,
             'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
@@ -109,8 +109,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => trim((string) env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => trim((string) env('MAIL_FROM_NAME', 'Example')),
     ],
 
 ];

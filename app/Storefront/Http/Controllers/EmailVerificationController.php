@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Throwable;
 
 class EmailVerificationController extends Controller
 {
@@ -39,7 +40,13 @@ class EmailVerificationController extends Controller
             return redirect()->route('home');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Chưa gửi được email xác thực. Kiểm tra hộp thư Spam, hoặc thử lại sau khi trang đã Live.');
+        }
 
         return back()->with('status', 'Đã gửi lại email xác thực.');
     }

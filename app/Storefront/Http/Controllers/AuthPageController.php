@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Throwable;
 
 class AuthPageController extends Controller
 {
@@ -83,7 +84,16 @@ class AuthPageController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
-        event(new Registered($user));
+
+        try {
+            event(new Registered($user));
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('error', 'Tài khoản đã tạo nhưng chưa gửi được email xác thực. Bấm Gửi lại sau khi trang đã Live.');
+        }
 
         return redirect()->route('verification.notice')->with('status', 'Tài khoản đã tạo. Hãy xác thực email trước khi đặt hàng.');
     }
