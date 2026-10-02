@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\SportController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Storefront\Http\Controllers\AuthPageController;
+use App\Storefront\Http\Controllers\PasswordResetController;
+use App\Storefront\Http\Controllers\RentalScheduleController;
 use App\Storefront\Http\Controllers\AvailabilityPageController;
 use App\Storefront\Http\Controllers\CartPageController;
 use App\Storefront\Http\Controllers\CatalogPageController;
@@ -62,6 +64,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/dang-nhap', [AuthPageController::class, 'login'])->name('login.store');
     Route::get('/dang-ky', [AuthPageController::class, 'showRegister'])->name('register');
     Route::post('/dang-ky', [AuthPageController::class, 'register'])->name('register.store');
+    Route::get('/quen-mat-khau', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('/quen-mat-khau', [PasswordResetController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
+    Route::get('/dat-lai-mat-khau/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/dat-lai-mat-khau', [PasswordResetController::class, 'update'])->middleware('throttle:6,1')->name('password.update');
 });
 
 Route::post('/dang-xuat', [AuthPageController::class, 'logout'])->middleware('auth')->name('logout');
@@ -81,6 +87,7 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::put('/tai-khoan', [ProfilePageController::class, 'update'])->name('account.update');
     Route::get('/tin-nhan', [MessagePageController::class, 'show'])->name('messages.show');
     Route::post('/tin-nhan', [MessagePageController::class, 'store'])->name('messages.store');
+    Route::get('/lich-thue', [RentalScheduleController::class, 'index'])->name('rentals.schedule');
     Route::get('/don-hang', [CheckoutPageController::class, 'orders'])->name('orders.index');
     Route::get('/don-hang/{order}', [CheckoutPageController::class, 'orderShow'])->name('orders.show');
     Route::post('/don-hang/{order}/gia-han', [CheckoutPageController::class, 'requestExtension'])->name('orders.extensions.store');

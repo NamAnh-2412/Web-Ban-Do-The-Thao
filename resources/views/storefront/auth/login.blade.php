@@ -39,6 +39,9 @@
                     'autocomplete' => 'current-password',
                 ])
             </div>
+            <div class="d-flex justify-content-end mb-3">
+                <a class="small" href="{{ route('password.request') }}">Quên mật khẩu?</a>
+            </div>
             <div class="form-check mb-4">
                 <input type="checkbox" id="remember" name="remember" class="form-check-input">
                 <label for="remember" class="form-check-label">Ghi nhớ đăng nhập</label>

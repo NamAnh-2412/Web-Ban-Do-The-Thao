@@ -82,8 +82,21 @@ class Product extends Model
             return null;
         }
 
-        if (str_starts_with($this->image_url, 'http') || str_starts_with($this->image_url, '/')) {
+        if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
             return $this->image_url;
+        }
+
+        if (str_starts_with($this->image_url, '/media/')) {
+            $relative = ltrim($this->image_url, '/');
+            if (! is_file(public_path($relative))) {
+                return null;
+            }
+
+            return asset($relative);
+        }
+
+        if (str_starts_with($this->image_url, '/')) {
+            return asset(ltrim($this->image_url, '/'));
         }
 
         return asset('storage/'.$this->image_url);

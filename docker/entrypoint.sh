@@ -72,6 +72,15 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 0' TERM INT
+if [[ "${RUN_SCHEDULER:-true}" == "true" ]]; then
+    (
+        while true; do
+            su-exec www-data php artisan schedule:run --no-interaction || true
+            sleep 60
+        done
+    ) &
+    server_pids+=("$!")
+fi
 php-fpm -F &
 server_pids+=("$!")
 nginx -g 'daemon off;' &

@@ -5,6 +5,7 @@ namespace App\Domain\User\Models;
 use App\Domain\Chat\Models\Conversation;
 use App\Domain\Order\Models\Order;
 use App\Domain\User\Enums\UserRole;
+use App\Domain\User\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,6 +68,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isOwnerAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function orders(): HasMany
