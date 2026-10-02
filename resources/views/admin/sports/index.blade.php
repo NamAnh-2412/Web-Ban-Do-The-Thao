@@ -2,7 +2,7 @@
 @section('title', 'Môn thể thao')
 @section('content')
     <div class="d-flex justify-content-between mb-4">
-        <div><h1 class="page-title">Môn thể thao</h1><p class="page-subtitle mb-0">Lọc catalog theo môn</p></div>
+        <div><h1 class="page-title">Môn thể thao</h1></div>
         <a href="{{ route('admin.sports.create') }}" class="btn btn-admin-primary">Thêm môn</a>
     </div>
     <div class="admin-card">

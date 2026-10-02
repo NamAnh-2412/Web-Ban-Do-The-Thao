@@ -7,9 +7,10 @@
     @include('partials.vendor-head', ['icons' => true])
     <link rel="stylesheet" href="{{ asset('css/admin/base.css') }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/shared/viewport.css') }}">
 </head>
 <body class="admin-body">
-    <aside class="admin-sidebar">
+    <aside class="admin-sidebar" id="admin-sidebar">
         <a class="admin-brand" href="{{ route('admin.dashboard') }}">
             <i class="fas fa-cube"></i>
             <span>WebTheThao</span>
@@ -89,7 +90,15 @@
             </div>
         </div>
     </aside>
+    <div class="admin-nav-backdrop" data-admin-nav-backdrop></div>
     <div class="admin-main">
+        <div class="admin-topbar">
+            <button class="btn btn-sm btn-outline-secondary admin-menu-btn" type="button" data-admin-nav-toggle aria-controls="admin-sidebar" aria-expanded="false">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+                <span>Menu</span>
+            </button>
+            <span class="fw-semibold">WebTheThao</span>
+        </div>
         <main class="admin-content">
             @if (session('status') || session('success'))
                 <div class="alert alert-success">{{ session('status') ?: session('success') }}</div>
@@ -101,6 +110,7 @@
         </main>
     </div>
     @include('partials.vendor-scripts')
+    <script src="{{ asset('js/shared/viewport.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

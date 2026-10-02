@@ -2,6 +2,8 @@
 
 @section('title', 'Đăng ký')
 
+@include('partials.css', ['file' => 'css/shared/password-toggle.css'])
+
 @section('content')
     <div class="policy-card col-lg-5 mx-auto">
         <h1 class="h4 mb-1">Đăng ký tài khoản khách</h1>
@@ -26,15 +28,24 @@
             </div>
             <div class="mb-3">
                 <label class="form-label" for="password">Mật khẩu</label>
-                <input class="form-control @error('password') is-invalid @enderror" type="password" id="password" name="password" required minlength="8">
-                @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @include('storefront.partials.password-field', [
+                    'id' => 'password',
+                    'name' => 'password',
+                    'autocomplete' => 'new-password',
+                    'minlength' => 8,
+                ])
             </div>
             <div class="mb-4">
                 <label class="form-label" for="password_confirmation">Xác nhận mật khẩu</label>
-                <input class="form-control" type="password" id="password_confirmation" name="password_confirmation" required>
+                @include('storefront.partials.password-field', [
+                    'id' => 'password_confirmation',
+                    'name' => 'password_confirmation',
+                    'autocomplete' => 'new-password',
+                ])
             </div>
             <button class="btn btn-success w-100" type="submit">Đăng ký</button>
         </form>
+        @include('partials.js', ['file' => 'js/storefront/password-toggle.js'])
         <p class="text-center text-muted mt-4 mb-0">
             Đã có tài khoản? <a href="{{ route('login') }}" class="fw-semibold">Đăng nhập</a>
         </p>

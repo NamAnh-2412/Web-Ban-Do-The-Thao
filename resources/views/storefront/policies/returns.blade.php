@@ -11,6 +11,5 @@
             <li>Lỗi nhà sản xuất: đổi mới hoặc hoàn tiền phần hàng (không gồm phí vận chuyển nếu khách đổi ý).</li>
             <li>Không nhận lại đồ đã cắt tem, ngấm nước, mùi lạ hoặc trầy đế rõ.</li>
         </ul>
-        <p class="mb-0">Đơn hàng lưu snapshot tên/giá/ảnh lúc mua nên lịch sử đơn không phụ thuộc catalog sau này.</p>
     </div>
 @endsection

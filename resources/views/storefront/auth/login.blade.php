@@ -2,6 +2,8 @@
 
 @section('title', 'Đăng nhập')
 
+@include('partials.css', ['file' => 'css/shared/password-toggle.css'])
+
 @section('content')
     <div class="policy-card col-lg-5 mx-auto">
         <h1 class="h4 mb-1">Đăng nhập</h1>
@@ -31,17 +33,11 @@
             </div>
             <div class="mb-3">
                 <label class="form-label" for="password">Mật khẩu</label>
-                <input
-                    class="form-control @error('password') is-invalid @enderror"
-                    type="password"
-                    id="password"
-                    name="password"
-                    autocomplete="current-password"
-                    required
-                >
-                @error('password')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+                @include('storefront.partials.password-field', [
+                    'id' => 'password',
+                    'name' => 'password',
+                    'autocomplete' => 'current-password',
+                ])
             </div>
             <div class="form-check mb-4">
                 <input type="checkbox" id="remember" name="remember" class="form-check-input">
@@ -49,6 +45,7 @@
             </div>
             <button class="btn btn-success w-100" type="submit">Đăng nhập</button>
         </form>
+        @include('partials.js', ['file' => 'js/storefront/password-toggle.js'])
         <p class="text-center text-muted mt-4 mb-0">
             Chưa có tài khoản? <a href="{{ route('register') }}" class="fw-semibold">Đăng ký ngay</a>
         </p>

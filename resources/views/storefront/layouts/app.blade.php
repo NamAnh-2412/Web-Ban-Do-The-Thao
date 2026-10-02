@@ -8,8 +8,9 @@
     @include('partials.vendor-head')
     <link href="{{ asset('css/storefront/base.css') }}" rel="stylesheet">
     @stack('styles')
+    <link href="{{ asset('css/shared/viewport.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="storefront-body">
     <nav class="navbar navbar-expand-lg navbar-dark navbar-wt">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ route('home') }}">
@@ -120,6 +121,7 @@
         </div>
     </footer>
     @include('partials.vendor-scripts')
+    <script src="{{ asset('js/shared/viewport.js') }}"></script>
     <script src="{{ asset('js/storefront/chrome.js') }}"></script>
     @stack('scripts')
 </body>

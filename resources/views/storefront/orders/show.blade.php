@@ -58,7 +58,6 @@
             <div>Ship: {{ number_format($order->shipping_fee, 0, ',', '.') }}đ</div>
         @endif
         <div class="fw-bold">Tổng {{ number_format($order->grand_total, 0, ',', '.') }}đ</div>
-        <p class="small text-secondary mb-0 mt-2">Đơn lưu snapshot tên/giá/SKU/ảnh tại lúc đặt.</p>
     </div>
 
     @foreach ($sessions as $session)

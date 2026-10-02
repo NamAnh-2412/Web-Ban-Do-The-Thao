@@ -1,4 +1,6 @@
 @extends('layouts.admin')
+@include('partials.css', ['file' => 'css/shared/password-toggle.css'])
+@include('partials.js', ['file' => 'js/storefront/password-toggle.js'])
 @section('title', 'Thêm tài khoản cửa hàng')
 @section('content')
     <div class="d-flex justify-content-between mb-4">
@@ -36,12 +38,20 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="password">Mật khẩu <span class="text-danger">*</span></label>
-            <input class="form-control @error('password') is-invalid @enderror" type="password" id="password" name="password" required minlength="8">
-            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            @include('storefront.partials.password-field', [
+                'id' => 'password',
+                'name' => 'password',
+                'autocomplete' => 'new-password',
+                'minlength' => 8,
+            ])
         </div>
         <div class="mb-4">
             <label class="form-label" for="password_confirmation">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-            <input class="form-control" type="password" id="password_confirmation" name="password_confirmation" required>
+            @include('storefront.partials.password-field', [
+                'id' => 'password_confirmation',
+                'name' => 'password_confirmation',
+                'autocomplete' => 'new-password',
+            ])
         </div>
         <button class="btn btn-admin-primary" type="submit">Tạo tài khoản</button>
     </form>

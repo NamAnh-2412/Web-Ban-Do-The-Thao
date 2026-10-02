@@ -18,7 +18,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
     <div>
         <h1 class="page-title">Tài chính</h1>
-        <p class="page-subtitle mb-0">Mỗi đơn một giao dịch đại diện (ưu tiên đã thu). Không dùng trạng thái lab <code>cod_paid</code>.</p>
+        <p class="page-subtitle mb-0">Mỗi đơn một giao dịch đại diện, ưu tiên khoản đã thu.</p>
     </div>
     <a href="{{ route('admin.finance.export', request()->query()) }}" class="btn btn-outline-secondary">Xuất CSV</a>
 </div>

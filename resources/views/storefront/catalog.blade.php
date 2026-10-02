@@ -48,13 +48,13 @@
         </div>
     </form>
 
-    <div class="row g-3">
+    <div class="vp-grid">
         @forelse ($products as $index => $product)
-            <div class="col-sm-6 col-lg-3 reveal" style="--delay: {{ min($index, 11) * 55 }}ms">
+            <div class="reveal" style="--delay: {{ min($index, 11) * 55 }}ms">
                 @include('storefront.partials.product-card', ['offerFocus' => $filters['offer_mode'] ?? null])
             </div>
         @empty
-            <div class="col-12"><div class="alert alert-light border">Không có sản phẩm khớp bộ lọc.</div></div>
+            <div><div class="alert alert-light border">Không có sản phẩm khớp bộ lọc.</div></div>
         @endforelse
     </div>
 

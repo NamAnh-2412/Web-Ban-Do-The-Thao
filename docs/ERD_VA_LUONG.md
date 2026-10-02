@@ -299,15 +299,21 @@ Trạng thái đơn: `pending` → `confirmed` → `paid` → `processing` → `
 
 ## 3. Script demo tay (10–15 phút)
 
-URL: [http://localhost/WebTheThao/public](http://localhost/WebTheThao/public)
+Trang trên Internet: [https://web-ban-do-the-thao-3xpb.onrender.com](https://web-ban-do-the-thao-3xpb.onrender.com)
 
-Mọi mật khẩu seed: `password`.
+Trang trên máy: [http://localhost/WebTheThao/public](http://localhost/WebTheThao/public)
 
-| Vai trò | Email |
-| --- | --- |
-| Khách | `khach@webthethao.test` |
-| Nhân viên | `nhanvien@webthethao.test` |
-| Quản trị / cửa hàng trưởng | `admin@webthethao.test` |
+Khách tự đăng ký ở trang Đăng ký. Admin và nhân viên không đăng ký trên form đó. Quản trị tạo thêm nhân viên trong mục Người dùng.
+
+| Nơi chạy | Vai trò | Email | Mật khẩu |
+| --- | --- | --- | --- |
+| Render | Quản trị | `namanhnguyen241205rs@gmail.com` | `WebTheThao-2026` |
+| Render | Nhân viên | Chưa có sẵn. Đăng nhập quản trị, vào Người dùng, tạo tài khoản nhân viên. | Mật khẩu lúc tạo |
+| Máy XAMPP | Quản trị | `admin@gmail.com` | `193850091011` |
+| Máy XAMPP | Nhân viên | `nhanvien@webthethao.test` | `password` |
+| Máy XAMPP | Khách | `khach@webthethao.test` | `password` |
+
+Render free tự tắt sau một lúc không ai vào. Mở lại bằng cách vào đúng URL ở trên và đợi khoảng một phút. Muốn tắt hẳn: trên Render mở service **Web-Ban-Do-The-Thao** → **Settings** → **Suspend Web Service**. Bật lại: **Resume Web Service**.
 
 ### Bước 1 — Khách đặt (khoảng 5 phút)
 
@@ -327,7 +333,7 @@ Mọi mật khẩu seed: `password`.
 
 ### Bước 3 — Quản trị (khoảng 3 phút)
 
-1. Đăng nhập `admin@webthethao.test`.
+1. Đăng nhập quản trị theo bảng trên (Render hoặc máy XAMPP).
 2. **Người dùng:** thấy khách / nhân viên / quản trị; nút thêm tài khoản cửa hàng.
 3. **Báo cáo:** lọc ngày, doanh thu.
 4. (Tuỳ) **Lịch thuê:** xác nhận / trả đồ nếu đơn có dòng thuê và đã `paid`.

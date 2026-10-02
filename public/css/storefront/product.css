@@ -1,4 +1,4 @@
-.gallery-card .thumb { height: 340px; }
+.gallery-card .thumb { aspect-ratio: 1 / 1; height: auto; }
 
 .mode-toggle {
     padding: .3rem;
@@ -16,6 +16,3 @@
     box-shadow: 0 8px 18px rgba(15, 39, 71, .22);
 }
 
-@media (max-width: 767.98px) {
-    .gallery-card .thumb { height: 240px; }
-}

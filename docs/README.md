@@ -18,6 +18,7 @@ Bắt đầu đọc theo thứ tự: [YEU_CAU_VA_KE_HOACH.md](YEU_CAU_VA_KE_HOAC
 | [DOI_CHIEU_LAB.md](DOI_CHIEU_LAB.md) | Audit `lar_vidu1` vs đồ án: module, API, khoảng trống. |
 | [XAC_THUC_EMAIL.md](XAC_THUC_EMAIL.md) | Bật Gmail SMTP (Lab 3 Plus) để nhận mail xác thực. |
 | [HUONG_PHAT_TRIEN.md](HUONG_PHAT_TRIEN.md) | Đối chiếu lab `lar_vidu1` + PDF thầy; chi tiết kỹ thuật từng pha. |
+| [BAT_TAT.md](BAT_TAT.md) | Bật, tắt và để trang Render tự ngủ. |
 
 `README.md` ở **gốc dự án** chỉ trỏ vào folder này.
 

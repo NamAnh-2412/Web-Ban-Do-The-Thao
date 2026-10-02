@@ -4,7 +4,6 @@
 
 @section('content')
     <h1 class="h3 mb-3">Thông báo email</h1>
-    <p class="text-secondary">Xác nhận đơn và nhắc hạn trả được xếp hàng gửi email (snapshot địa chỉ lúc gửi, không join User).</p>
 
     @forelse ($notifications as $row)
         <div class="policy-card mb-3">
