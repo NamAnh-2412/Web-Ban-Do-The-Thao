@@ -7,6 +7,7 @@ use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Product\Models\Sport;
 use App\Domain\Product\Services\ProductWriter;
+use App\Gateway\Media\CloudinaryImageStore;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,10 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function __construct(private ProductWriter $writer) {}
+    public function __construct(
+        private ProductWriter $writer,
+        private CloudinaryImageStore $images,
+    ) {}
 
     public function index(): View
     {
@@ -38,7 +42,7 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
-        $data['image_url'] = $request->file('image')?->store('products', 'public');
+        $data['image_url'] = $this->storeImage($request);
         $product = $this->writer->saveWithVariants($data);
 
         return redirect()->route('admin.products.edit', $product)->with('success', 'Đã thêm sản phẩm.');
@@ -54,22 +58,55 @@ class ProductController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $data = $this->validated($request, $product);
-        if ($file = $request->file('image')) {
-            $data['image_url'] = $file->store('products', 'public');
+        $previous = $product->image_url;
+        if ($request->file('image')) {
+            $data['image_url'] = $this->storeImage($request);
         }
         $this->writer->saveWithVariants($data, $product);
+        if (isset($data['image_url']) && $data['image_url'] !== $previous) {
+            $this->deleteImage($previous);
+        }
 
         return redirect()->route('admin.products.edit', $product)->with('success', 'Đã cập nhật sản phẩm.');
     }
 
     public function destroy(Product $product): RedirectResponse
     {
-        if ($product->image_url && ! str_starts_with($product->image_url, 'http') && ! str_starts_with($product->image_url, '/')) {
-            Storage::disk('public')->delete($product->image_url);
-        }
+        $this->deleteImage($product->image_url);
         $this->writer->deleteProduct($product);
 
         return redirect()->route('admin.products.index')->with('success', 'Đã xóa sản phẩm.');
+    }
+
+    private function storeImage(Request $request): ?string
+    {
+        $file = $request->file('image');
+        if ($file === null) {
+            return null;
+        }
+
+        if ($this->images->configured()) {
+            return $this->images->upload($file);
+        }
+
+        return $file->store('products', 'public');
+    }
+
+    private function deleteImage(?string $imageUrl): void
+    {
+        if ($imageUrl === null || $imageUrl === '') {
+            return;
+        }
+
+        if (str_contains($imageUrl, 'res.cloudinary.com')) {
+            $this->images->delete($imageUrl);
+
+            return;
+        }
+
+        if (! str_starts_with($imageUrl, 'http') && ! str_starts_with($imageUrl, '/')) {
+            Storage::disk('public')->delete($imageUrl);
+        }
     }
 
     /** @return array{categories: Collection, sports: Collection} */

@@ -22,6 +22,14 @@ class ProductImageSrcTest extends TestCase
         $this->assertNull($product->imageSrc());
     }
 
+    public function test_remote_url_is_used_as_stored(): void
+    {
+        $url = 'https://res.cloudinary.com/demo/image/upload/v1/webthethao/products/ao.jpg';
+        $product = new Product(['image_url' => $url]);
+
+        $this->assertSame($url, $product->imageSrc());
+    }
+
     public function test_uploaded_storage_path_stays_under_storage(): void
     {
         $product = new Product(['image_url' => 'products/demo.jpg']);

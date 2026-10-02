@@ -45,6 +45,13 @@ return [
         'ipn_url' => env('MOMO_IPN_URL'),
     ],
 
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key' => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        'folder' => env('CLOUDINARY_FOLDER', 'webthethao/products'),
+    ],
+
     'ghn' => [
         'base_url' => env('GHN_BASE_URL', 'https://dev-online-gateway.ghn.vn/shiip/public-api'),
         'token' => env('GHN_TOKEN', ''),

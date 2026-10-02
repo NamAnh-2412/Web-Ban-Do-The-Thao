@@ -62,7 +62,7 @@
             <div class="col-md-6">
                 <label class="form-label" for="image">Ảnh đại diện</label>
                 <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
-                <div class="form-text">JPG, PNG hoặc WebP; tối đa 2 MB.</div>
+                <div class="form-text">JPG, PNG hoặc WebP; tối đa 2 MB. Ảnh mới được lưu trên Cloudinary khi đã cấu hình khóa.</div>
                 @if ($editing && $product->imageSrc())
                     <img src="{{ $product->imageSrc() }}" class="img-thumbnail mt-2" style="max-height:120px" alt="">
                 @endif
