@@ -219,7 +219,8 @@ class AdminCrudTest extends TestCase
 
         $variant = $product->variants()->first();
         $this->assertNotNull($variant->stock);
-        $this->assertSame(7, $variant->stock->quantity_on_hand);
+        $this->assertSame(0, $variant->stock->quantity_on_hand);
+        $this->assertSame(0, $variant->items()->count());
 
         $this->get(route('admin.products.edit', $product))
             ->assertOk()
@@ -227,7 +228,7 @@ class AdminCrudTest extends TestCase
             ->assertSee($variant->sku);
     }
 
-    public function test_admin_can_update_product_stock_from_form(): void
+    public function test_editing_product_does_not_overwrite_stock(): void
     {
         $admin = User::factory()->admin()->create();
         $category = Category::factory()->create();
@@ -240,6 +241,14 @@ class AdminCrudTest extends TestCase
             'sku' => 'ADM-UPD-'.uniqid(),
             'sale_price' => 350000,
         ]);
+        InventoryStock::factory()->create([
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 4,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.products.edit', $product))
+            ->assertOk()
+            ->assertSee('Sửa ở Tồn kho');
 
         $this->actingAs($admin)->put(route('admin.products.update', $product), [
             'name' => 'Giày cập nhật mới',
@@ -260,7 +269,7 @@ class AdminCrudTest extends TestCase
         ])->assertRedirect(route('admin.products.edit', $product));
 
         $this->assertSame('Giày cập nhật mới', $product->fresh()->name);
-        $this->assertSame(12, $variant->fresh()->stock->quantity_on_hand);
+        $this->assertSame(4, $variant->fresh()->stock->quantity_on_hand);
     }
 
     public function test_rental_product_quantity_creates_items_customers_can_book(): void
@@ -287,7 +296,13 @@ class AdminCrudTest extends TestCase
 
         $variant = ProductVariant::query()->where('sku', 'like', 'RENT-KHO-%')->first();
         $this->assertNotNull($variant);
-        $this->assertSame(3, $variant->stock->quantity_on_hand);
+        $this->assertSame(0, InventoryItem::query()->where('product_variant_id', $variant->id)->count());
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'rental_item_count' => 3,
+        ])->assertRedirect();
+
         $this->assertSame(3, InventoryItem::query()->where('product_variant_id', $variant->id)->count());
 
         $this->get('/kho/thue?product_variant_id='.$variant->id.'&start_date=2026-09-01&end_date=2026-09-03')
@@ -320,22 +335,9 @@ class AdminCrudTest extends TestCase
 
         $this->assertSame(0, $variant->items()->count());
 
-        $this->actingAs($admin)->put(route('admin.products.update', $product), [
-            'name' => $product->name,
-            'category_id' => $category->id,
-            'offer_mode' => 'rental',
-            'variants' => [
-                [
-                    'id' => $variant->id,
-                    'sku' => $variant->sku,
-                    'size' => $variant->size,
-                    'color' => $variant->color,
-                    'sale_price' => '',
-                    'rental_price_per_day' => 50000,
-                    'deposit_amount' => 150000,
-                    'quantity' => 4,
-                ],
-            ],
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'rental_item_count' => 4,
         ])->assertRedirect();
 
         $this->assertSame(4, $variant->items()->count());
@@ -366,7 +368,7 @@ class AdminCrudTest extends TestCase
         ])->assertRedirect();
 
         $variant = ProductVariant::query()->where('sku', 'like', 'SALE-ONLY-%')->first();
-        $this->assertSame(7, $variant->stock->quantity_on_hand);
+        $this->assertSame(0, $variant->stock->quantity_on_hand);
         $this->assertSame(0, $variant->items()->count());
     }
 
@@ -409,7 +411,29 @@ class AdminCrudTest extends TestCase
 
         $this->actingAs($staff)->get(route('admin.users.index'))->assertForbidden();
         $this->actingAs($staff)->get(route('admin.coupons.index'))->assertForbidden();
-        $this->actingAs($staff)->get(route('admin.reports.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('admin.products.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('admin.categories.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('admin.sports.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('admin.home-banner.edit'))->assertForbidden();
+
+        $menu = $this->actingAs($staff)->get(route('admin.dashboard'))->assertOk();
+        $menu->assertSee('Tổng quan')
+            ->assertSee('Tồn kho / món thuê')
+            ->assertSee('Bán tại quầy')
+            ->assertSee('Đơn hàng')
+            ->assertSee('Tin nhắn')
+            ->assertSee('Thanh toán')
+            ->assertSee('Tài chính')
+            ->assertSee('Lịch thuê')
+            ->assertSee('Đánh giá')
+            ->assertSee('Báo cáo')
+            ->assertDontSee('Danh mục')
+            ->assertDontSee('Môn thể thao')
+            ->assertDontSee('Banner trang chủ')
+            ->assertDontSee('Mã giảm giá')
+            ->assertDontSee('>Sản phẩm</span>', false);
+
+        $this->actingAs($staff)->get(route('admin.reports.index'))->assertOk();
     }
 
     public function test_staff_can_confirm_pending_order(): void
@@ -511,6 +535,40 @@ class AdminCrudTest extends TestCase
         $this->assertStringContainsString('#'.$oldPending->id.'</td>', $queuePage);
         $this->assertStringNotContainsString('#'.$todayPos->id.'</td>', $queuePage);
         $this->assertStringNotContainsString('#'.$oldPaid->id.'</td>', $queuePage);
+    }
+
+    public function test_orders_index_counts_every_order_in_a_date_range(): void
+    {
+        $staff = User::factory()->staff()->create();
+        $customer = User::factory()->create();
+        $start = now()->subDays(4)->startOfDay();
+        $middle = now()->subDays(2)->startOfDay();
+        $end = now()->subDay()->startOfDay();
+
+        foreach ([$start, $middle, $end] as $day) {
+            Order::factory()->create([
+                'user_id' => $customer->id,
+                'status' => OrderStatus::Paid,
+                'channel' => OrderChannel::Pos,
+                'created_at' => $day,
+                'updated_at' => $day,
+            ]);
+        }
+        Order::factory()->create([
+            'user_id' => $customer->id,
+            'status' => OrderStatus::Paid,
+            'channel' => OrderChannel::Online,
+            'created_at' => now()->subDays(12)->startOfDay(),
+            'updated_at' => now()->subDays(12)->startOfDay(),
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('admin.orders.index', [
+                'from' => $start->toDateString(),
+                'to' => $end->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Từ '.$start->format('d/m/Y').' đến '.$end->format('d/m/Y').' có tất cả 3 đơn', false);
     }
 
     public function test_staff_can_refund_paid_order_without_user_id(): void

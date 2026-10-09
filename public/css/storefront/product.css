@@ -72,3 +72,25 @@
     margin-top: .15rem;
 }
 
+@media (max-width: 767.98px) {
+    .product-page .gallery-card .thumb {
+        aspect-ratio: 16 / 10;
+        max-height: 13.5rem;
+    }
+
+    .product-page {
+        padding-bottom: 5.25rem;
+    }
+
+    .product-page #add-cart-btn {
+        position: fixed;
+        left: .85rem;
+        right: .85rem;
+        bottom: .85rem;
+        z-index: 30;
+        width: auto;
+        min-height: 2.85rem;
+        box-shadow: 0 10px 24px rgba(15, 39, 71, .22);
+    }
+}
+

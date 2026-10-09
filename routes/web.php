@@ -107,17 +107,24 @@ Route::middleware(['auth', 'customer', 'verified'])->group(function () {
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
-    Route::resource('categories', CategoryController::class)->except(['show']);
-    Route::resource('sports', SportController::class)->except(['show']);
-    Route::resource('products', AdminProductController::class)->except(['show']);
-    Route::get('/banner-trang-chu', [HomeBannerController::class, 'edit'])->name('home-banner.edit');
-    Route::put('/banner-trang-chu', [HomeBannerController::class, 'update'])->name('home-banner.update');
-    Route::delete('/banner-trang-chu', [HomeBannerController::class, 'destroy'])->name('home-banner.destroy');
+    Route::middleware('owner')->group(function () {
+        Route::resource('categories', CategoryController::class)->except(['show']);
+        Route::resource('sports', SportController::class)->except(['show']);
+        Route::resource('products', AdminProductController::class)->except(['show']);
+        Route::get('/banner-trang-chu', [HomeBannerController::class, 'edit'])->name('home-banner.edit');
+        Route::put('/banner-trang-chu', [HomeBannerController::class, 'update'])->name('home-banner.update');
+        Route::delete('/banner-trang-chu', [HomeBannerController::class, 'destroy'])->name('home-banner.destroy');
+    });
 
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/stocks', fn () => redirect()->route('admin.inventory.index'));
     Route::post('/inventory/stocks', [InventoryController::class, 'upsertStock'])->name('inventory.stocks');
+    Route::post('/inventory/receipts', [InventoryController::class, 'storeReceipt'])->name('inventory.receipts.store');
+    Route::post('/inventory/receipts/{receipt}/approve', [InventoryController::class, 'approveReceipt'])->name('inventory.receipts.approve');
+    Route::post('/inventory/receipts/{receipt}/reject', [InventoryController::class, 'rejectReceipt'])->name('inventory.receipts.reject');
     Route::post('/inventory/items', [InventoryController::class, 'storeItem'])->name('inventory.items');
     Route::patch('/inventory/items/{item}/status', [InventoryController::class, 'changeItemStatus'])->name('inventory.items.status');
+    Route::post('/inventory/products/{product}/suspension', [InventoryController::class, 'toggleSuspension'])->name('inventory.suspension');
 
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
@@ -159,6 +166,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
     Route::delete('/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::get('/messages', [AdminMessageController::class, 'index'])->name('messages.index');
     Route::post('/messages/users/{user}', [AdminMessageController::class, 'start'])->name('messages.start');
@@ -172,6 +180,5 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/users/{user}/toggle', [AdminUserController::class, 'toggle'])->name('users.toggle');
 
         Route::resource('coupons', CouponController::class)->except(['show']);
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     });
 });

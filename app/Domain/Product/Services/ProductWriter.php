@@ -3,7 +3,6 @@
 namespace App\Domain\Product\Services;
 
 use App\Domain\Inventory\Models\InventoryStock;
-use App\Domain\Inventory\Services\InventoryWriter;
 use App\Domain\Product\Models\Category;
 use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\ProductVariant;
@@ -15,7 +14,6 @@ use Illuminate\Support\Str;
 
 class ProductWriter
 {
-    public function __construct(private InventoryWriter $inventory) {}
     public function createSport(array $data): Sport
     {
         $sport = Sport::query()->create($this->withSlug($data, Sport::class));
@@ -149,20 +147,15 @@ class ProductWriter
                 }
 
                 $kept[] = $variant->id;
-                InventoryStock::query()->updateOrCreate(
-                    ['product_variant_id' => $variant->id],
-                    [
-                        'quantity_on_hand' => (int) ($row['quantity'] ?? 0),
-                        'low_stock_threshold' => 5,
-                    ],
-                );
 
-                $mode = $data['offer_mode'] ?? '';
-                if ($mode === 'rental' && $payload['rental_price_per_day'] !== null) {
-                    $this->inventory->syncRentalPool($variant->id, (int) ($row['quantity'] ?? 0));
-                }
-                if ($mode === 'both' && $payload['rental_price_per_day'] !== null) {
-                    $this->inventory->syncRentalPool($variant->id, (int) ($row['rental_quantity'] ?? $variant->items()->count()));
+                if (empty($row['id'])) {
+                    InventoryStock::query()->firstOrCreate(
+                        ['product_variant_id' => $variant->id],
+                        [
+                            'quantity_on_hand' => 0,
+                            'low_stock_threshold' => 5,
+                        ],
+                    );
                 }
             }
 

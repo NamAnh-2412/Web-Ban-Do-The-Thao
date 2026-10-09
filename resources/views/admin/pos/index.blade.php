@@ -141,23 +141,24 @@
                             </div>
                         @endif
                         @if ($rentalVariants->isNotEmpty())
-                            <div class="pos-product-body pt-0">
-                                <button class="pos-chip" type="button" data-bs-toggle="collapse" data-bs-target="#rent-{{ $product->id }}">Thuê</button>
-                                <div class="collapse mt-2" id="rent-{{ $product->id }}">
-                                    @foreach ($rentalVariants as $variant)
-                                        <form class="mb-2" method="post" action="{{ route('admin.pos.add') }}">
-                                            @csrf
-                                            @include('admin.pos._desk_query')
-                                            <input type="hidden" name="line_type" value="rental">
-                                            <input type="hidden" name="product_variant_id" value="{{ $variant->id }}">
-                                            <div class="small text-muted mb-1">{{ $variant->size ?: $variant->sku }} · {{ number_format($variant->rental_price_per_day, 0, ',', '.') }}đ/ngày</div>
-                                            <input class="form-control form-control-sm mb-1" type="date" name="rental_start" min="{{ date('Y-m-d') }}" required>
-                                            <input class="form-control form-control-sm mb-1" type="date" name="rental_end" min="{{ date('Y-m-d') }}" required>
-                                            <label class="small text-muted mb-1 d-block">Số lượng</label>
-                                            <input class="form-control form-control-sm mb-1 pos-rent-qty" type="number" name="quantity" min="1" value="1" required>
-                                            <button class="pos-chip" type="submit">Thêm thuê</button>
-                                        </form>
-                                    @endforeach
+                            <div class="pos-rent-wrap">
+                                <button class="pos-chip" type="button" data-pos-rent-toggle aria-expanded="false">Thuê</button>
+                                <div class="pos-rent" hidden>
+                                    <div class="pos-rent-scroll">
+                                        @foreach ($rentalVariants as $variant)
+                                            <form class="pos-rent-form" method="post" action="{{ route('admin.pos.add') }}">
+                                                @csrf
+                                                @include('admin.pos._desk_query')
+                                                <input type="hidden" name="line_type" value="rental">
+                                                <input type="hidden" name="product_variant_id" value="{{ $variant->id }}">
+                                                <div class="pos-rent-meta">{{ $variant->size ?: $variant->sku }} · {{ number_format($variant->rental_price_per_day, 0, ',', '.') }}đ/ngày</div>
+                                                <label>Từ ngày<input type="date" name="rental_start" min="{{ date('Y-m-d') }}" required></label>
+                                                <label>Đến ngày<input type="date" name="rental_end" min="{{ date('Y-m-d') }}" required></label>
+                                                <label>Số lượng<input type="number" name="quantity" min="1" value="1" required></label>
+                                                <button class="pos-rent-submit" type="submit">Thêm thuê</button>
+                                            </form>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                         @endif

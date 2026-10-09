@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Domain\Chat\Models\Conversation;
 use App\Domain\Chat\Services\ChatService;
 use App\Domain\Coupon\Services\CouponService;
+use App\Domain\Inventory\Enums\StockReceiptStatus;
 use App\Domain\Inventory\Models\InventoryItem;
+use App\Domain\Inventory\Models\StockReceipt;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Rental\Models\RentalBooking;
 use App\Domain\User\Models\User;
@@ -54,11 +56,18 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.admin', function ($view) {
             $user = auth()->user();
             $unread = 0;
+            $pendingReceipts = 0;
             if ($user instanceof User && $user->isStoreAccount()) {
                 $unread = app(ChatService::class)->unreadConversationCountForStore();
             }
+            if ($user instanceof User && $user->isOwnerAdmin()) {
+                $pendingReceipts = StockReceipt::query()
+                    ->where('status', StockReceiptStatus::Pending)
+                    ->count();
+            }
 
             $view->with('unreadMessages', $unread);
+            $view->with('pendingStockReceipts', $pendingReceipts);
         });
     }
 }

@@ -135,7 +135,7 @@ class ProductController extends Controller
             'variants.*.sale_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.rental_price_per_day' => ['nullable', 'numeric', 'min:0'],
             'variants.*.deposit_amount' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.quantity' => ['required', 'integer', 'min:0'],
+            'variants.*.quantity' => ['nullable', 'integer', 'min:0'],
             'variants.*.rental_quantity' => ['nullable', 'integer', 'min:0'],
         ], [
             'name.required' => 'Vui lòng nhập tên sản phẩm.',
@@ -143,7 +143,7 @@ class ProductController extends Controller
             'variants.required' => 'Sản phẩm phải có ít nhất một phân loại.',
             'variants.*.sku.required' => 'Vui lòng nhập mã SKU.',
             'variants.*.sku.distinct' => 'Mã SKU không được trùng nhau.',
-            'variants.*.quantity.required' => 'Vui lòng nhập tồn kho.',
+            'variants.*.quantity.required' => 'Vui lòng nhập số lượng cho phân loại mới.',
         ]);
 
         $validator->after(function (LaravelValidator $validator) use ($request) {

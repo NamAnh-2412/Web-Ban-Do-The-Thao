@@ -34,6 +34,7 @@
 @endphp
 
 @section('content')
+<div class="product-page">
     <nav class="small mb-3">
         <a href="{{ route('catalog.index') }}">Sản phẩm</a>
         @if ($product->category)
@@ -41,7 +42,7 @@
         @endif
     </nav>
 
-    <div class="row g-4">
+    <div class="row g-4 product-page">
         <div class="col-lg-5">
             <div class="card card-product gallery-card">
                 <div class="thumb">
@@ -167,12 +168,14 @@
                     <input type="hidden" name="product_variant_id" id="cart-variant-id" value="{{ $product->variants->first()?->id }}">
                     <input type="hidden" name="rental_start" id="cart-start">
                     <input type="hidden" name="rental_end" id="cart-end">
-                    <div class="mb-3" id="qty-wrap">
+                    <div class="product-actions" id="qty-wrap">
                         <label class="form-label" for="cart-qty" id="cart-qty-label">{{ $defaultMode === 'sale' ? 'Số lượng mua' : 'Số lượng thuê' }}</label>
-                        <input class="form-control" style="max-width: 8rem;" type="number" name="quantity" id="cart-qty" value="1" min="1">
+                        <div class="product-actions-row">
+                            <input class="form-control product-qty" type="number" name="quantity" id="cart-qty" value="1" min="1">
+                            <button class="btn btn-success" type="submit" id="add-cart-btn">{{ $defaultMode === 'sale' ? 'Thêm mua' : 'Thêm thuê' }}</button>
+                        </div>
                         <div class="form-text" id="cart-qty-hint">{{ $defaultMode === 'rental' ? 'Mỗi món là một lịch thuê riêng.' : '' }}</div>
                     </div>
-                    <button class="btn btn-success" type="submit" id="add-cart-btn">{{ $defaultMode === 'sale' ? 'Thêm mua' : 'Thêm thuê' }}</button>
                 </form>
                 <p class="small text-secondary mt-2 mb-0">Có thể mua và thuê cùng một giỏ. Thuê nhiều món: chọn số lượng — hệ thống gán từng món trống.</p>
             @endif
@@ -199,4 +202,5 @@
         'canRent' => $canRent,
         'defaultMode' => $defaultMode,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
+</div>
 @endsection

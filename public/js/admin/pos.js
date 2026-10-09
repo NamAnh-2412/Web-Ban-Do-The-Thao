@@ -26,6 +26,46 @@
         });
     }
 
+    function closeRentPanels() {
+        document.querySelectorAll('.pos-rent').forEach((panel) => {
+            panel.hidden = true;
+            panel.closest('.pos-product')?.classList.remove('is-rent-open');
+        });
+        document.querySelectorAll('[data-pos-rent-toggle]').forEach((button) => {
+            button.classList.remove('is-active');
+            button.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    document.querySelectorAll('[data-pos-rent-toggle]').forEach((button) => {
+        button.addEventListener('click', function () {
+            const product = button.closest('.pos-product');
+            const panel = product ? product.querySelector('.pos-rent') : null;
+            if (!panel) {
+                return;
+            }
+            const willOpen = panel.hidden;
+            closeRentPanels();
+            if (!willOpen) {
+                return;
+            }
+            panel.hidden = false;
+            product.classList.add('is-rent-open');
+            button.classList.add('is-active');
+            button.setAttribute('aria-expanded', 'true');
+        });
+    });
+
+    document.querySelectorAll('.pos-rent-scroll').forEach((scroller) => {
+        scroller.addEventListener('wheel', function (event) {
+            if (scroller.scrollHeight <= scroller.clientHeight + 1) {
+                return;
+            }
+            event.preventDefault();
+            scroller.scrollTop += event.deltaY;
+        }, { passive: false });
+    });
+
     document.addEventListener('submit', function (event) {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) {

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Inventory\Enums\ItemStatus;
+use App\Domain\Inventory\Enums\StockReceiptStatus;
 use App\Domain\Inventory\Models\InventoryStock;
+use App\Domain\Inventory\Models\StockReceipt;
 use App\Domain\Order\Enums\LineType;
 use App\Domain\Order\Enums\OrderChannel;
 use App\Domain\Order\Enums\OrderStatus;
@@ -17,6 +19,7 @@ use App\Domain\Rental\Services\RentalWriter;
 use App\Domain\Report\Services\ReportService;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -32,6 +35,7 @@ class DashboardController extends Controller
 
         $todayOrders = $this->todayOrders();
         $weekRevenue = $this->reports->weekRevenue();
+        $lowRentals = $this->lowRentalVariants();
 
         return view('admin.dashboard', [
             'todayOrderCount' => (clone $todayOrders)->count(),
@@ -59,8 +63,11 @@ class DashboardController extends Controller
             'activeBookings' => RentalSession::group(
                 RentalBooking::query()->where('status', BookingStatus::Active)->get()
             )->count(),
+            'pendingStockReceipts' => auth()->user()?->isOwnerAdmin()
+                ? StockReceipt::query()->where('status', StockReceiptStatus::Pending)->count()
+                : 0,
             'lowSaleCount' => $this->lowSaleStocks()->count(),
-            'emptyRentalCount' => $this->emptyRentalVariants()->count(),
+            'lowRentalCount' => $lowRentals->count(),
             'onlinePendingRows' => $this->onlinePending()
                 ->with('user')
                 ->orderByDesc('id')
@@ -79,11 +86,7 @@ class DashboardController extends Controller
                 ->orderBy('quantity_on_hand')
                 ->limit(5)
                 ->get(),
-            'emptyRentalRows' => $this->emptyRentalVariants()
-                ->with('product')
-                ->orderBy('sku')
-                ->limit(5)
-                ->get(),
+            'lowRentalRows' => $lowRentals->take(5),
         ]);
     }
 
@@ -104,14 +107,26 @@ class DashboardController extends Controller
     private function lowSaleStocks(): Builder
     {
         return InventoryStock::query()
-            ->whereColumn('quantity_on_hand', '<=', 'low_stock_threshold')
+            ->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold')
             ->whereHas('variant.product', fn (Builder $query) => $query->whereIn('offer_mode', OfferMode::matching('sale')));
     }
 
-    private function emptyRentalVariants(): Builder
+    /** @return Collection<int, ProductVariant> */
+    private function lowRentalVariants(): Collection
     {
         return ProductVariant::query()
+            ->with(['stock', 'product'])
+            ->withCount([
+                'items as available_items' => fn (Builder $query) => $query->where('status', ItemStatus::Available),
+            ])
             ->whereHas('product', fn (Builder $query) => $query->whereIn('offer_mode', OfferMode::matching('rental')))
-            ->whereDoesntHave('items', fn (Builder $query) => $query->where('status', ItemStatus::Available));
+            ->orderBy('sku')
+            ->get()
+            ->filter(function (ProductVariant $variant) {
+                $threshold = (int) ($variant->stock?->low_stock_threshold ?? 5);
+
+                return (int) $variant->available_items <= $threshold;
+            })
+            ->values();
     }
 }

@@ -270,6 +270,12 @@ class CloseoutFlowsTest extends TestCase
         ])->assertRedirect();
 
         $variant = ProductVariant::query()->where('sku', $sku)->first();
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 10,
+            'rental_item_count' => 10,
+        ])->assertRedirect();
+        $variant->refresh();
         $this->assertSame(10, $variant->stock->quantity_on_hand);
         $this->assertSame(10, $variant->items()->count());
 

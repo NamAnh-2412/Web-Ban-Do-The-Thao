@@ -52,6 +52,8 @@ class InventoryIndexTest extends TestCase
             ->assertDontSee('VOT-KHO-SKU-3')
             ->assertDontSee('Thêm món thuê')
             ->assertDontSee('Mã món')
+            ->assertSee('data-mode="rental"', false)
+            ->assertSee('js/admin/inventory-form.js', false)
             ->getContent();
 
         $this->assertMatchesRegularExpression('/>Thuê</', $html);
@@ -108,8 +110,165 @@ class InventoryIndexTest extends TestCase
             ->assertSee('Áo đã bán kho')
             ->getContent();
 
-        $this->assertMatchesRegularExpression('/AO-SOLD-SKU[\s\S]{0,800}?>17</', $html);
-        $this->assertDoesNotMatchRegularExpression('/AO-SOLD-SKU[\s\S]{0,800}?>26</', $html);
-        $this->assertDoesNotMatchRegularExpression('/AO-SOLD-SKU[\s\S]{0,800}?>9</', $html);
+        $this->assertMatchesRegularExpression('/AO-SOLD-SKU[\s\S]{0,1600}?>17</', $html);
+        $this->assertDoesNotMatchRegularExpression('/AO-SOLD-SKU[\s\S]{0,1600}?>26</', $html);
+        $this->assertDoesNotMatchRegularExpression('/AO-SOLD-SKU[\s\S]{0,1600}?>9</', $html);
+    }
+
+    public function test_inventory_index_filters_by_offer_mode(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sale = Product::factory()->create([
+            'offer_mode' => OfferMode::Sale,
+            'name' => 'Áo chỉ bán lọc',
+            'slug' => 'ao-chi-ban-loc',
+        ]);
+        ProductVariant::factory()->create([
+            'product_id' => $sale->id,
+            'sku' => 'LOC-SALE',
+            'sale_price' => 100000,
+            'rental_price_per_day' => null,
+        ]);
+        $both = Product::factory()->create([
+            'offer_mode' => OfferMode::Both,
+            'name' => 'Áo bán và thuê lọc',
+            'slug' => 'ao-ban-va-thue-loc',
+        ]);
+        ProductVariant::factory()->create([
+            'product_id' => $both->id,
+            'sku' => 'LOC-BOTH',
+            'sale_price' => 100000,
+            'rental_price_per_day' => 20000,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.inventory.index', ['offer_mode' => 'both']))
+            ->assertOk()
+            ->assertSee('LOC-BOTH')
+            ->assertDontSee('LOC-SALE')
+            ->assertSee('Bán và thuê');
+
+        $this->actingAs($admin)
+            ->get(route('admin.inventory.index', ['offer_mode' => 'sale']))
+            ->assertOk()
+            ->assertSee('LOC-SALE')
+            ->assertDontSee('LOC-BOTH');
+    }
+
+    public function test_rental_only_stock_ignores_sale_quantity(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $variant = $this->variantWithMode(OfferMode::Rental, 'RENT-POOL');
+        foreach (range(1, 20) as $n) {
+            InventoryItem::factory()->create([
+                'product_variant_id' => $variant->id,
+                'asset_code' => 'RENT-POOL-'.$n,
+            ]);
+        }
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 10,
+        ])->assertRedirect()
+            ->assertSessionHasErrors('rental_item_count');
+
+        $this->assertSame(20, $variant->items()->count());
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 10,
+            'rental_item_count' => 20,
+        ])->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(20, $variant->items()->count());
+    }
+
+    public function test_sale_only_stock_ignores_rental_count(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $variant = $this->variantWithMode(OfferMode::Sale, 'SALE-POOL');
+        InventoryStock::factory()->create([
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 8,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'rental_item_count' => 10,
+        ])->assertRedirect()
+            ->assertSessionHasErrors('quantity_on_hand');
+
+        $this->assertSame(8, $variant->fresh()->stock->quantity_on_hand);
+        $this->assertSame(0, $variant->items()->count());
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 12,
+            'rental_item_count' => 10,
+        ])->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(12, $variant->fresh()->stock->quantity_on_hand);
+        $this->assertSame(0, $variant->items()->count());
+    }
+
+    public function test_both_stock_leaves_the_blank_pool_unchanged(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $variant = $this->variantWithMode(OfferMode::Both, 'BOTH-POOL');
+        InventoryStock::factory()->create([
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 15,
+        ]);
+        foreach (range(1, 6) as $n) {
+            InventoryItem::factory()->create([
+                'product_variant_id' => $variant->id,
+                'asset_code' => 'BOTH-POOL-'.$n,
+            ]);
+        }
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'quantity_on_hand' => 9,
+        ])->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(9, $variant->fresh()->stock->quantity_on_hand);
+        $this->assertSame(6, $variant->items()->count());
+
+        $this->actingAs($admin)->post(route('admin.inventory.stocks'), [
+            'product_variant_id' => $variant->id,
+            'rental_item_count' => 4,
+        ])->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(9, $variant->fresh()->stock->quantity_on_hand);
+        $this->assertSame(4, $variant->items()->count());
+    }
+
+    public function test_get_inventory_stocks_returns_to_the_inventory_page(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get('/admin/inventory/stocks')
+            ->assertRedirect(route('admin.inventory.index'));
+    }
+
+    private function variantWithMode(OfferMode $mode, string $sku): ProductVariant
+    {
+        $product = Product::factory()->create([
+            'offer_mode' => $mode,
+            'name' => $sku,
+            'slug' => strtolower($sku),
+        ]);
+
+        return ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => $sku,
+            'sale_price' => $mode === OfferMode::Rental ? null : 100000,
+            'rental_price_per_day' => $mode === OfferMode::Sale ? null : 20000,
+        ]);
     }
 }

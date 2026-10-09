@@ -6,7 +6,7 @@
     <title>@yield('title', 'Bán tại quầy') — WebTheThao</title>
     @include('partials.vendor-head', ['icons' => true])
     <link rel="stylesheet" href="{{ asset('css/shared/viewport.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/admin/pos.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin/pos.css') }}?v={{ filemtime(public_path('css/admin/pos.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/shared/bank-qr.css') }}">
     @stack('styles')
 </head>
@@ -14,7 +14,7 @@
     @yield('content')
     @include('partials.vendor-scripts')
     <script src="{{ asset('js/shared/viewport.js') }}"></script>
-    <script src="{{ asset('js/admin/pos.js') }}"></script>
+    <script src="{{ asset('js/admin/pos.js') }}?v={{ filemtime(public_path('js/admin/pos.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

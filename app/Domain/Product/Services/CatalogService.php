@@ -45,6 +45,7 @@ class CatalogService
         return CatalogCache::remember($cacheKey, function () use ($filters, $page, $limit) {
             $query = Product::query()
                 ->where('products.is_active', true)
+                ->where('products.is_suspended', false)
                 ->with([
                     'category:id,name,slug,parent_id,is_active',
                     'sport:id,name,slug,sort_order,is_active',
@@ -62,6 +63,7 @@ class CatalogService
         return CatalogCache::remember('product:'.$id, function () use ($id) {
             return Product::query()
                 ->where('is_active', true)
+                ->where('is_suspended', false)
                 ->with([
                     'category',
                     'sport',
@@ -76,6 +78,7 @@ class CatalogService
         return CatalogCache::remember('product-slug:'.$slug, function () use ($slug) {
             return Product::query()
                 ->where('is_active', true)
+                ->where('is_suspended', false)
                 ->where('slug', $slug)
                 ->with([
                     'category',
@@ -90,7 +93,7 @@ class CatalogService
     {
         return ProductVariant::query()
             ->where('is_active', true)
-            ->whereHas('product', fn (Builder $q) => $q->where('is_active', true))
+            ->whereHas('product', fn (Builder $q) => $q->where('is_active', true)->where('is_suspended', false))
             ->with('product')
             ->findOrFail($id);
     }
@@ -119,6 +122,7 @@ class CatalogService
         $products = Product::query()
             ->whereIn('id', $rows->pluck('product_id'))
             ->where('is_active', true)
+            ->where('is_suspended', false)
             ->with([
                 'category:id,name,slug,parent_id,is_active',
                 'sport:id,name,slug,sort_order,is_active',

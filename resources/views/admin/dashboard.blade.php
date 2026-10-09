@@ -45,13 +45,23 @@
                 </a>
             </div>
         @endforeach
+        @if (auth()->user()->isOwnerAdmin())
+            <div>
+                <a href="{{ route('admin.inventory.index') }}" class="text-decoration-none text-reset">
+                    <div class="admin-card p-4 h-100 {{ $pendingStockReceipts > 0 ? 'border-warning' : '' }}">
+                        <div class="text-muted small">Phiếu nhập chờ duyệt</div>
+                        <div class="fs-3 fw-bold">{{ $pendingStockReceipts }}</div>
+                    </div>
+                </a>
+            </div>
+        @endif
     </div>
 
     <div class="vp-grid vp-grid--fit mb-4">
         @foreach ([
             ['Đang thuê', $activeBookings, route('admin.rentals.index', ['status' => 'active'])],
-            ['SKU bán tồn thấp', $lowSaleCount, route('admin.inventory.index')],
-            ['SKU thuê hết món', $emptyRentalCount, route('admin.inventory.index')],
+            ['Sắp hết hàng bán', $lowSaleCount, route('admin.inventory.index')],
+            ['SKU thuê sắp hết', $lowRentalCount, route('admin.inventory.index')],
         ] as [$label, $value, $href])
             <div>
                 <a href="{{ $href }}" class="text-decoration-none text-reset">
@@ -122,20 +132,21 @@
         </div>
     </div>
 
-    @if ($lowSaleRows->isNotEmpty() || $emptyRentalRows->isNotEmpty())
+    @if ($lowSaleRows->isNotEmpty() || $lowRentalRows->isNotEmpty())
         <div class="vp-split">
             @if ($lowSaleRows->isNotEmpty())
                 <div>
                     <div class="admin-card">
-                        <div class="p-3 fw-semibold">SKU bán tồn thấp</div>
+                        <div class="p-3 fw-semibold">Sắp hết hàng bán</div>
                         <table class="table admin-table mb-0">
-                            <thead><tr><th>Mã SKU</th><th>Sản phẩm</th><th>Còn</th></tr></thead>
+                            <thead><tr><th>Mã SKU</th><th>Sản phẩm</th><th>Còn bán</th><th></th></tr></thead>
                             <tbody>
                             @foreach ($lowSaleRows as $stock)
                                 <tr>
                                     <td>{{ $stock->variant?->sku }}</td>
                                     <td>{{ $stock->variant?->product?->name }}</td>
-                                    <td>{{ $stock->quantity_on_hand }}</td>
+                                    <td>{{ max(0, (int) $stock->quantity_on_hand - (int) $stock->quantity_reserved) }}</td>
+                                    <td>@include('admin.inventory._suspend', ['product' => $stock->variant?->product])</td>
                                 </tr>
                             @endforeach
                             </tbody>
@@ -143,17 +154,19 @@
                     </div>
                 </div>
             @endif
-            @if ($emptyRentalRows->isNotEmpty())
+            @if ($lowRentalRows->isNotEmpty())
                 <div>
                     <div class="admin-card">
-                        <div class="p-3 fw-semibold">SKU thuê hết món sẵn sàng</div>
+                        <div class="p-3 fw-semibold">Sắp hết món thuê</div>
                         <table class="table admin-table mb-0">
-                            <thead><tr><th>Mã SKU</th><th>Sản phẩm</th></tr></thead>
+                            <thead><tr><th>Mã SKU</th><th>Sản phẩm</th><th>Sẵn sàng</th><th></th></tr></thead>
                             <tbody>
-                            @foreach ($emptyRentalRows as $variant)
+                            @foreach ($lowRentalRows as $variant)
                                 <tr>
                                     <td>{{ $variant->sku }}</td>
                                     <td>{{ $variant->product?->name }}</td>
+                                    <td>{{ (int) $variant->available_items }}</td>
+                                    <td>@include('admin.inventory._suspend', ['product' => $variant->product])</td>
                                 </tr>
                             @endforeach
                             </tbody>

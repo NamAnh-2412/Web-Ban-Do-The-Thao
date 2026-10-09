@@ -80,7 +80,7 @@
         <div class="d-flex justify-content-between mb-4">
             <div>
                 <h5 class="card-title mb-1">2. Phân loại sản phẩm</h5>
-                <small class="text-muted">SKU bán: tồn bán. SKU thuê: số món thuê. SKU bán và thuê: điền <strong>cả hai</strong> (độc lập).</small>
+                <small class="text-muted">Chỉ thêm, sửa, xóa phân loại (SKU, size, màu, giá). Số lượng nhập ở <a href="{{ route('admin.inventory.index') }}">Tồn kho</a>.</small>
             </div>
             <button type="button" class="btn btn-outline-primary btn-sm" id="add-variant"><i class="fas fa-plus me-1"></i> Thêm phân loại</button>
         </div>
@@ -97,8 +97,15 @@
                         <div class="col-md-2"><label class="form-label">Giá bán</label><input type="number" min="0" step="1000" class="form-control" name="variants[{{ $index }}][sale_price]" value="{{ $variant['sale_price'] ?? '' }}"></div>
                         <div class="col-md-2"><label class="form-label">Thuê/ngày</label><input type="number" min="0" step="1000" class="form-control" name="variants[{{ $index }}][rental_price_per_day]" value="{{ $variant['rental_price_per_day'] ?? '' }}"></div>
                         <div class="col-md-1"><label class="form-label">Cọc</label><input type="number" min="0" step="1000" class="form-control" name="variants[{{ $index }}][deposit_amount]" value="{{ $variant['deposit_amount'] ?? '' }}"></div>
-                        <div class="col-md-1 js-qty-sale"><label class="form-label js-label-sale-qty">Tồn bán *</label><input type="number" min="0" class="form-control" name="variants[{{ $index }}][quantity]" value="{{ $variant['quantity'] ?? 0 }}" required></div>
-                        <div class="col-md-1 js-qty-rental"><label class="form-label">Món thuê</label><input type="number" min="0" class="form-control" name="variants[{{ $index }}][rental_quantity]" value="{{ $variant['rental_quantity'] ?? 0 }}"></div>
+                        @if (! empty($variant['id']))
+                            <div class="col-md-2">
+                                <label class="form-label">Kho hiện tại</label>
+                                <div class="small pt-2">
+                                    Tồn bán {{ $variant['quantity'] ?? 0 }} · Món thuê {{ $variant['rental_quantity'] ?? 0 }}
+                                    <a href="{{ route('admin.inventory.index') }}">Sửa ở Tồn kho</a>
+                                </div>
+                            </div>
+                        @endif
                         <div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-outline-danger w-100 remove-variant"><i class="fas fa-trash"></i></button></div>
                     </div>
                 </div>
@@ -119,8 +126,6 @@
             <div class="col-md-2"><label class="form-label">Giá bán</label><input type="number" data-field="sale_price" class="form-control" min="0"></div>
             <div class="col-md-2"><label class="form-label">Thuê/ngày</label><input type="number" data-field="rental_price_per_day" class="form-control" min="0"></div>
             <div class="col-md-1"><label class="form-label">Cọc</label><input type="number" data-field="deposit_amount" class="form-control" min="0"></div>
-            <div class="col-md-1 js-qty-sale"><label class="form-label js-label-sale-qty">Tồn bán *</label><input type="number" data-field="quantity" class="form-control" min="0" value="0" required></div>
-            <div class="col-md-1 js-qty-rental"><label class="form-label">Món thuê</label><input type="number" data-field="rental_quantity" class="form-control" min="0" value="0"></div>
             <div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-outline-danger w-100 remove-variant"><i class="fas fa-trash"></i></button></div>
         </div>
     </div>

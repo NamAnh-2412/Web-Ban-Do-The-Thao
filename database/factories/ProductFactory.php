@@ -28,6 +28,7 @@ class ProductFactory extends Factory
             'image_url' => '/media/images/demo.jpg',
             'video_url' => null,
             'is_active' => true,
+            'is_suspended' => false,
         ];
     }
 }

@@ -25,6 +25,7 @@ class Product extends Model
         'image_url',
         'video_url',
         'is_active',
+        'is_suspended',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class Product extends Model
         return [
             'offer_mode' => OfferMode::class,
             'is_active' => 'boolean',
+            'is_suspended' => 'boolean',
         ];
     }
 

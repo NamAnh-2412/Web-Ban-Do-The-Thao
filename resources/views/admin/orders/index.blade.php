@@ -5,10 +5,14 @@
         <div>
             <h1 class="page-title">Đơn hàng</h1>
             <p class="page-subtitle mb-0">
-                @if ($listDate)
-                    Đơn tạo ngày {{ \Illuminate\Support\Carbon::parse($listDate)->format('d/m/Y') }} — quầy, online, mua, thuê, đã hủy.
+                @if ($from && $to)
+                    @if ($from === $to)
+                        Ngày {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} có tất cả {{ $orderCount }} đơn.
+                    @else
+                        Từ {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} đến {{ \Illuminate\Support\Carbon::parse($to)->format('d/m/Y') }} có tất cả {{ $orderCount }} đơn.
+                    @endif
                 @else
-                    Đơn online chờ nhận (mọi ngày).
+                    Mọi ngày: tất cả {{ $orderCount }} đơn.
                 @endif
             </p>
         </div>
@@ -20,8 +24,12 @@
     </div>
     <form class="row g-2 mb-3 align-items-end" method="get">
         <div class="col-auto">
-            <label class="form-label mb-1" for="order-date">Ngày</label>
-            <input id="order-date" class="form-control" type="date" name="date" value="{{ $listDate }}" max="{{ now()->toDateString() }}">
+            <label class="form-label mb-1" for="order-from">Từ ngày</label>
+            <input id="order-from" class="form-control" type="date" name="from" value="{{ $from }}" max="{{ now()->toDateString() }}">
+        </div>
+        <div class="col-auto">
+            <label class="form-label mb-1" for="order-to">Đến ngày</label>
+            <input id="order-to" class="form-control" type="date" name="to" value="{{ $to }}" max="{{ now()->toDateString() }}">
         </div>
         <div class="col-auto">
             <label class="form-label mb-1" for="order-channel">Kênh</label>
@@ -41,7 +49,7 @@
             </select>
         </div>
         <div class="col-auto"><button class="btn btn-outline-secondary">Xem</button></div>
-        @if ($listDate !== now()->toDateString())
+        @if ($from !== now()->toDateString() || $to !== now()->toDateString())
             <div class="col-auto"><a class="btn btn-outline-primary" href="{{ route('admin.orders.index') }}">Hôm nay</a></div>
         @endif
     </form>
@@ -61,8 +69,10 @@
             @empty
                 <tr>
                     <td colspan="6" class="text-center text-muted py-4">
-                        @if ($listDate)
-                            Không có đơn ngày {{ \Illuminate\Support\Carbon::parse($listDate)->format('d/m/Y') }}.
+                        @if ($from && $to && $from !== $to)
+                            Không có đơn từ {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} đến {{ \Illuminate\Support\Carbon::parse($to)->format('d/m/Y') }}.
+                        @elseif ($from)
+                            Không có đơn ngày {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }}.
                         @else
                             Không có đơn.
                         @endif

@@ -86,6 +86,7 @@ class ChatService
         return Product::query()
             ->with('variants')
             ->where('is_active', true)
+            ->where('is_suspended', false)
             ->orderBy('name')
             ->limit($limit)
             ->get()
@@ -186,7 +187,7 @@ class ChatService
     private function snapshotProduct(int $productId): array
     {
         $product = Product::query()->with('variants')->find($productId);
-        if ($product === null || ! $product->is_active) {
+        if ($product === null || ! $product->is_active || $product->is_suspended) {
             throw ValidationException::withMessages([
                 'attachment_id' => ['Sản phẩm không tồn tại hoặc đã ngừng bán.'],
             ]);
