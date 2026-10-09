@@ -1,5 +1,6 @@
 @extends('layouts.admin')
 @include('partials.css', ['file' => 'css/admin/chat.css'])
+@include('partials.js', ['file' => 'js/storefront/chat-composer.js'])
 @section('title', 'Hội thoại với '.($conversation->user->name ?? 'khách hàng'))
 @section('content')
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -17,7 +18,15 @@
                 <div class="d-flex mb-3 {{ $fromStore ? 'justify-content-end' : 'justify-content-start' }}">
                     <div class="chat-bubble {{ $fromStore ? 'chat-bubble-mine' : 'chat-bubble-store' }}">
                         <div class="small fw-semibold mb-1">{{ $fromStore ? 'Cửa hàng' : ($conversation->user->name ?? 'Khách') }}</div>
-                        <div class="chat-body">{{ $message->body }}</div>
+                        @if ($message->body !== '')
+                            <div class="chat-body">{{ $message->body }}</div>
+                        @endif
+                        @if ($message->hasAttachment())
+                            @include('partials.chat.attachment-card', [
+                                'payload' => $message->attachment_payload,
+                                'mine' => $fromStore,
+                            ])
+                        @endif
                         <div class="small opacity-75 mt-1">{{ $message->created_at->format('d/m/Y H:i') }}</div>
                     </div>
                 </div>
@@ -26,12 +35,13 @@
             @endforelse
         </div>
 
-        <form method="post" action="{{ route('admin.messages.store', $conversation) }}">
-            @csrf
-            <label class="form-label" for="body">Trả lời</label>
-            <textarea id="body" name="body" class="form-control mb-3 @error('body') is-invalid @enderror" rows="3" maxlength="2000" required placeholder="Nhập tin nhắn...">{{ old('body') }}</textarea>
-            @error('body')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            <button class="btn btn-admin-primary" type="submit">Gửi</button>
-        </form>
+        @include('partials.chat.composer', [
+            'action' => route('admin.messages.store', $conversation),
+            'productOptions' => $productOptions,
+            'orderOptions' => $orderOptions,
+            'submitLabel' => 'Gửi',
+            'buttonClass' => 'btn btn-admin-primary',
+            'label' => 'Trả lời',
+        ])
     </div>
 @endsection

@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\Rental\Services\RentalWriter;
 use App\Gateway\Services\NotificationOrchestrator;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class NotifyRentalsCommand extends Command
 {
@@ -13,13 +14,30 @@ class NotifyRentalsCommand extends Command
 
     protected $description = 'Queue email nhắc hạn trả đồ và quá hạn (Notification service)';
 
-    public function handle(NotificationOrchestrator $notifications, RentalWriter $rentals): int
+    public function handle(NotificationOrchestrator $notifications): int
     {
-        $overdueMarked = $rentals->markOverdue();
         $date = $this->option('date');
-        $result = $notifications->dispatchRentalCycle(is_string($date) && $date !== '' ? $date : null);
+        $runDate = is_string($date) && $date !== '' ? $date : now()->toDateString();
 
-        $this->info("Đánh dấu quá hạn: {$overdueMarked}. Nhắc hạn: {$result['due_reminders']}. Quá hạn mail: {$result['overdue']}.");
+        try {
+            $result = $notifications->dispatchRentalCycle($runDate);
+        } catch (Throwable $e) {
+            Log::error('notification.rental_cycle.command_failed', [
+                'run_date' => $runDate,
+                'error' => $e->getMessage(),
+            ]);
+            $this->error('Lỗi chu kỳ nhắc thuê: '.$e->getMessage());
+
+            return self::FAILURE;
+        }
+
+        $this->info(sprintf(
+            'Nhắc hạn trả: %d. Quá hạn mail: %d. (ngày chạy %s, lead %d ngày)',
+            $result['due_reminders'],
+            $result['overdue'],
+            $runDate,
+            (int) config('notifications.due_reminder_days', 1),
+        ));
 
         return self::SUCCESS;
     }

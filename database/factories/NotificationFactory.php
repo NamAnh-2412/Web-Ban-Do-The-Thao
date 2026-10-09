@@ -29,6 +29,7 @@ class NotificationFactory extends Factory
                 'dedupe_key' => 'order_confirmed:'.$orderId,
                 'order_id' => $orderId,
             ],
+            'dedupe_key' => 'order_confirmed:'.$orderId,
             'status' => NotificationStatus::Queued,
         ];
     }

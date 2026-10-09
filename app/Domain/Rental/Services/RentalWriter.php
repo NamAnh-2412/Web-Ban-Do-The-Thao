@@ -98,6 +98,7 @@ class RentalWriter
     public function dueOn(string $date): Collection
     {
         return RentalBooking::query()
+            ->with(['orderItem', 'variant.product'])
             ->whereDate('end_date', $date)
             ->whereIn('status', [BookingStatus::Confirmed->value, BookingStatus::Active->value])
             ->orderBy('id')
@@ -108,6 +109,7 @@ class RentalWriter
     public function listOverdue(): Collection
     {
         return RentalBooking::query()
+            ->with(['orderItem', 'variant.product'])
             ->where('status', BookingStatus::Overdue)
             ->orderBy('end_date')
             ->get();
@@ -269,36 +271,36 @@ class RentalWriter
             if ($returnedDay->gt($end)) {
                 $lateDays = (int) $end->diffInDays($returnedDay);
                 $fee = round($lateDays * (float) $booking->daily_rate, 2);
-                RentalIncident::query()->create([
-                    'rental_booking_id' => $booking->id,
-                    'rental_return_id' => $return->id,
-                    'type' => IncidentType::Late,
-                    'description' => "Trả muộn {$lateDays} ngày.",
-                    'fee_amount' => $fee,
-                ]);
+                $this->addIncident(
+                    $booking,
+                    IncidentType::Late,
+                    $fee,
+                    "Trả muộn {$lateDays} ngày.",
+                    $return->id,
+                );
             }
 
             if ($condition === ReturnCondition::Damaged) {
-                RentalIncident::query()->create([
-                    'rental_booking_id' => $booking->id,
-                    'rental_return_id' => $return->id,
-                    'type' => IncidentType::Damage,
-                    'description' => $incidentDescription ?: 'Hư hỏng khi trả đồ.',
-                    'fee_amount' => round((float) ($incidentFee ?? 0), 2),
-                ]);
+                $this->addIncident(
+                    $booking,
+                    IncidentType::Damage,
+                    (float) ($incidentFee ?? 0),
+                    $incidentDescription ?: 'Hư hỏng khi trả đồ.',
+                    $return->id,
+                );
             }
 
             if ($condition === ReturnCondition::Lost) {
                 $lostFee = ($incidentFee === null || $incidentFee <= 0)
                     ? (float) $booking->deposit_amount
                     : $incidentFee;
-                RentalIncident::query()->create([
-                    'rental_booking_id' => $booking->id,
-                    'rental_return_id' => $return->id,
-                    'type' => IncidentType::Lost,
-                    'description' => $incidentDescription ?: 'Mất món thuê.',
-                    'fee_amount' => round((float) $lostFee, 2),
-                ]);
+                $this->addIncident(
+                    $booking,
+                    IncidentType::Lost,
+                    (float) $lostFee,
+                    $incidentDescription ?: 'Mất món thuê.',
+                    $return->id,
+                );
             }
 
             $booking->status = BookingStatus::Returned;

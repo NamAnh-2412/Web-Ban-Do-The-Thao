@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Chat\Enums\ChatAttachmentType;
 use App\Domain\Chat\Models\Conversation;
 use App\Domain\Chat\Services\ChatService;
 use App\Domain\User\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MessageController extends Controller
@@ -29,19 +31,36 @@ class MessageController extends Controller
         ]);
         $this->chat->markReadFor($conversation, $request->user());
 
-        return view('admin.messages.show', compact('conversation'));
+        return view('admin.messages.show', [
+            'conversation' => $conversation,
+            'productOptions' => $this->chat->productPickerOptions(),
+            'orderOptions' => $this->chat->orderPickerOptions((int) $conversation->user_id),
+        ]);
     }
 
     public function store(Request $request, Conversation $conversation): RedirectResponse
     {
-        $data = $request->validate([
-            'body' => ['required', 'string', 'max:2000'],
-        ], [
-            'body.required' => 'Vui lòng nhập nội dung tin nhắn.',
-            'body.max' => 'Tin nhắn tối đa 2000 ký tự.',
+        $request->merge([
+            'attachment_type' => $request->filled('attachment_type') ? $request->input('attachment_type') : null,
+            'attachment_id' => $request->filled('attachment_id') ? $request->input('attachment_id') : null,
         ]);
 
-        $this->chat->post($conversation, $request->user(), $data['body']);
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:2000'],
+            'attachment_type' => ['nullable', 'string', Rule::enum(ChatAttachmentType::class)],
+            'attachment_id' => ['nullable', 'integer', 'min:1', 'required_with:attachment_type'],
+        ], [
+            'body.max' => 'Tin nhắn tối đa 2000 ký tự.',
+            'attachment_id.required_with' => 'Vui lòng chọn mục đính kèm.',
+        ]);
+
+        $this->chat->post(
+            $conversation,
+            $request->user(),
+            (string) ($data['body'] ?? ''),
+            $data['attachment_type'] ?? null,
+            isset($data['attachment_id']) ? (int) $data['attachment_id'] : null,
+        );
 
         return redirect()
             ->route('admin.messages.show', $conversation)

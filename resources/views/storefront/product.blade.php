@@ -69,16 +69,71 @@
                 @endif
             </div>
 
-            <label class="form-label">Biến thể</label>
-            <select class="form-select mb-3" id="variant-select">
-                @foreach ($product->variants as $variant)
-                    <option value="{{ $variant->id }}">
-                        {{ $variant->sku }}
-                        @if ($variant->size) · size {{ $variant->size }} @endif
-                        @if ($variant->color) · {{ $variant->color }} @endif
-                    </option>
-                @endforeach
-            </select>
+            @php
+                $variantColors = $product->variants->pluck('color')->filter(fn ($v) => filled($v))->unique()->values();
+                $variantSizes = $product->variants->pluck('size')->filter(fn ($v) => filled($v))->unique()->values();
+                $hasColorSize = $variantColors->isNotEmpty() || $variantSizes->isNotEmpty();
+            @endphp
+
+            <div class="variant-picker mb-3" id="variant-picker" data-has-attrs="{{ $hasColorSize ? '1' : '0' }}">
+                @if ($variantColors->isNotEmpty())
+                    <div class="variant-group" data-variant-group="color">
+                        <div class="variant-group-label">
+                            Màu
+                            <span class="variant-group-value" data-variant-label="color">—</span>
+                        </div>
+                        <div class="variant-chips" role="listbox" aria-label="Chọn màu">
+                            @foreach ($variantColors as $color)
+                                <button type="button" class="variant-chip" role="option" data-attr="color" data-value="{{ $color }}" aria-pressed="false">
+                                    {{ $color }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if ($variantSizes->isNotEmpty())
+                    <div class="variant-group" data-variant-group="size">
+                        <div class="variant-group-label">
+                            Size
+                            <span class="variant-group-value" data-variant-label="size">—</span>
+                        </div>
+                        <div class="variant-chips" role="listbox" aria-label="Chọn size">
+                            @foreach ($variantSizes as $size)
+                                <button type="button" class="variant-chip" role="option" data-attr="size" data-value="{{ $size }}" aria-pressed="false">
+                                    {{ $size }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @unless ($hasColorSize)
+                    <div class="variant-group" data-variant-group="sku">
+                        <div class="variant-group-label">
+                            Phân loại
+                            <span class="variant-group-value" data-variant-label="sku">—</span>
+                        </div>
+                        <div class="variant-chips" role="listbox" aria-label="Chọn phân loại">
+                            @foreach ($product->variants as $variant)
+                                <button
+                                    type="button"
+                                    class="variant-chip"
+                                    role="option"
+                                    data-attr="sku"
+                                    data-value="{{ $variant->id }}"
+                                    data-variant-id="{{ $variant->id }}"
+                                    aria-pressed="false"
+                                >
+                                    {{ $variant->sku }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endunless
+
+                <p class="variant-sku small text-secondary mb-0" id="variant-sku-label"></p>
+            </div>
 
             <div id="panel-sale" class="{{ $defaultMode === 'sale' ? '' : 'd-none' }}">
                 <div class="price fs-4 mb-1" id="sale-price">—</div>

@@ -24,12 +24,15 @@ class CartQtyGuard
      * @param  list<array<string, mixed>>  $existing
      * @param  array<string, mixed>  $data
      */
-    public function saleFits(array $existing, array $data): bool
+    public function saleFits(array $existing, array $data, ?string $ignoreLineId = null): bool
     {
         $wanted = max(1, (int) ($data['quantity'] ?? 1));
         $free = $this->availability->saleAvailability((int) $data['product_variant_id']);
         $already = 0;
         foreach ($existing as $line) {
+            if ($ignoreLineId !== null && (string) ($line['id'] ?? '') === $ignoreLineId) {
+                continue;
+            }
             if (($line['line_type'] ?? '') !== 'sale') {
                 continue;
             }
@@ -46,7 +49,7 @@ class CartQtyGuard
      * @param  list<array<string, mixed>>  $existing
      * @param  array<string, mixed>  $data
      */
-    public function rentalFits(array $existing, array $data): bool
+    public function rentalFits(array $existing, array $data, ?string $ignoreLineId = null): bool
     {
         $wanted = max(1, (int) ($data['quantity'] ?? 1));
         $free = $this->availability->rentalAvailability(
@@ -56,6 +59,9 @@ class CartQtyGuard
         );
         $already = 0;
         foreach ($existing as $line) {
+            if ($ignoreLineId !== null && (string) ($line['id'] ?? '') === $ignoreLineId) {
+                continue;
+            }
             if (($line['line_type'] ?? '') !== 'rental') {
                 continue;
             }

@@ -101,17 +101,6 @@ class CheckoutPageController extends Controller
         return redirect()->route('orders.show', $order->id)->with('status', 'Đã đặt hàng. Tồn kho đã khóa, chờ cửa hàng xác nhận.');
     }
 
-    public function orders(Request $request): View
-    {
-        $orders = Order::query()
-            ->where('user_id', $request->user()->id)
-            ->with('items')
-            ->orderByDesc('id')
-            ->paginate(10);
-
-        return view('storefront.orders.index', ['orders' => $orders]);
-    }
-
     public function orderShow(Request $request, int $order): View
     {
         $row = Order::query()

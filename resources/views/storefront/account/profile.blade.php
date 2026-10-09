@@ -35,7 +35,7 @@
                 <input class="form-control" type="password" id="password_confirmation" name="password_confirmation">
             </div>
             <button class="btn btn-success" type="submit">Lưu hồ sơ</button>
-            <a class="btn btn-outline-secondary ms-2" href="{{ route('rentals.schedule') }}">Lịch thuê</a>
+            <a class="btn btn-outline-secondary ms-2" href="{{ route('my-orders.index') }}">Đơn của tôi</a>
             <a class="btn btn-outline-secondary ms-2" href="{{ route('messages.show') }}">Tin nhắn cửa hàng</a>
         </form>
     </div>

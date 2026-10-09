@@ -1,0 +1,180 @@
+.my-orders-title {
+    margin: 0 0 .35rem;
+    color: var(--wt-blue);
+    font-size: clamp(1.55rem, 1.2rem + 1.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -.03em;
+}
+.my-orders-lead {
+    max-width: 40rem;
+    color: var(--wt-muted);
+}
+
+.my-orders-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.25rem;
+    border-bottom: 1px solid var(--wt-line);
+}
+.my-orders-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .7rem .15rem .85rem;
+    color: var(--wt-muted);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .2s ease, border-color .2s ease;
+}
+.my-orders-tab:hover { color: var(--wt-blue); }
+.my-orders-tab.is-active {
+    color: var(--wt-blue);
+    border-bottom-color: var(--wt-blue);
+}
+.my-orders-tab-icon { display: inline-flex; }
+.my-orders-tab-count {
+    min-width: 1.4rem;
+    padding: .05rem .4rem;
+    border-radius: 999px;
+    background: #e8eef6;
+    color: var(--wt-blue);
+    font-size: .78rem;
+    text-align: center;
+}
+.my-orders-tab.is-active .my-orders-tab-count {
+    background: rgba(26, 79, 140, .12);
+}
+
+.order-card {
+    background: var(--wt-card);
+    border-radius: var(--wt-radius);
+    box-shadow: var(--wt-shadow);
+    overflow: hidden;
+}
+.order-card-head,
+.order-card-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .75rem 1rem;
+    padding: 1rem 1.15rem;
+}
+.order-card-head {
+    border-bottom: 1px solid var(--wt-line);
+    background: rgba(238, 243, 249, .45);
+}
+.order-card-title-wrap,
+.order-card-meta,
+.order-card-total-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem .55rem;
+}
+.order-card-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--wt-ink);
+}
+.order-card-date { color: var(--wt-muted); font-size: .9rem; }
+.order-kind,
+.order-channel,
+.order-line-badge,
+.order-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.55rem;
+    padding: .15rem .55rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+}
+.order-kind.is-sale { color: #146c43; background: #d9f5e5; }
+.order-kind.is-rent { color: #b42318; background: #ffe4e1; }
+.order-kind.is-mixed { color: #5b21b6; background: #ede9fe; }
+.order-channel { color: var(--wt-blue); background: #e8eef6; }
+.order-status { color: #92400e; background: #fef3c7; }
+.order-line-badge.is-sale { color: #fff; background: #122033; }
+.order-line-badge.is-rent { color: #fff; background: #1a4f8c; }
+
+.order-card-items {
+    list-style: none;
+    margin: 0;
+    padding: .35rem 0;
+}
+.order-card-item {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+    gap: .75rem;
+    align-items: start;
+    padding: .75rem 1.15rem;
+}
+.order-card-thumb {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: .7rem;
+    overflow: hidden;
+    background: #e8eef6;
+    border: 1px solid var(--wt-line);
+}
+.order-card-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.order-card-thumb-fallback {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #d7e4f4, #b7c9e0);
+}
+.order-card-item-name { font-weight: 700; color: var(--wt-ink); }
+.order-card-item-sku {
+    margin: .15rem 0 .4rem;
+    color: var(--wt-muted);
+    font-size: .86rem;
+}
+.order-card-item-side { text-align: right; }
+.order-card-qty {
+    color: var(--wt-muted);
+    font-size: .86rem;
+}
+.order-card-price {
+    margin-top: .15rem;
+    color: var(--wt-blue);
+    font-weight: 800;
+}
+
+.order-card-foot {
+    border-top: 1px solid var(--wt-line);
+    align-items: center;
+}
+.order-card-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem .85rem;
+    color: var(--wt-muted);
+    font-size: .9rem;
+}
+.order-card-total {
+    display: flex;
+    align-items: baseline;
+    gap: .4rem;
+    color: var(--wt-ink);
+}
+.order-card-total strong {
+    color: var(--wt-blue);
+    font-size: 1.15rem;
+}
+.order-card-link {
+    border-radius: 999px;
+    font-weight: 700;
+}
+.order-card-extend {
+    padding: 0 1.15rem 1.15rem;
+    border-top: 1px dashed var(--wt-line);
+}

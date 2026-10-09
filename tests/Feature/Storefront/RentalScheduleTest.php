@@ -24,18 +24,19 @@ class RentalScheduleTest extends TestCase
         $booking->load('variant.product');
 
         $this->actingAs($user)
-            ->get('/lich-thue')
+            ->get(route('my-orders.index', ['tab' => 'thue']))
             ->assertOk()
+            ->assertSee('Đơn của tôi', false)
             ->assertSee($booking->variant->product->name)
             ->assertSee('Gửi yêu cầu gia hạn');
 
         $this->actingAs($user)
-            ->from('/lich-thue')
+            ->from(route('my-orders.index', ['tab' => 'thue']))
             ->post(route('orders.extensions.store', $booking->order_id), [
                 'booking_id' => $booking->id,
                 'new_end_date' => '2026-10-08',
             ])
-            ->assertRedirect('/lich-thue');
+            ->assertRedirect(route('my-orders.index', ['tab' => 'thue']));
 
         $this->assertDatabaseHas('rental_extensions', [
             'rental_booking_id' => $booking->id,
@@ -43,10 +44,21 @@ class RentalScheduleTest extends TestCase
         ]);
     }
 
+    public function test_legacy_rental_schedule_url_redirects_to_my_orders(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/lich-thue')
+            ->assertRedirect('/don-cua-toi?tab=thue');
+    }
+
     public function test_store_account_cannot_open_the_customer_schedule(): void
     {
         $staff = User::factory()->staff()->create();
 
-        $this->actingAs($staff)->get('/lich-thue')->assertRedirect(route('admin.dashboard'));
+        $this->actingAs($staff)
+            ->get(route('my-orders.index', ['tab' => 'thue']))
+            ->assertRedirect(route('admin.dashboard'));
     }
 }

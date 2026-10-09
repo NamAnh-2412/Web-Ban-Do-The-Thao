@@ -22,6 +22,7 @@ class Notification extends Model
         'subject',
         'body',
         'payload',
+        'dedupe_key',
         'status',
         'sent_at',
         'error_message',

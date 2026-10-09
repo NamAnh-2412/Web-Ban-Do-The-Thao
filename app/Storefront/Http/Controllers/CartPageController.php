@@ -46,6 +46,75 @@ class CartPageController extends Controller
             ->with('cart_added', true);
     }
 
+    public function updateQuantity(Request $request, string $lineId): RedirectResponse
+    {
+        $data = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+        ], [
+            'quantity.required' => 'Nhập số lượng.',
+            'quantity.min' => 'Số lượng tối thiểu là 1.',
+        ]);
+
+        $line = collect($this->cart->lines())->first(fn (array $row) => (string) ($row['id'] ?? '') === $lineId);
+        if ($line === null) {
+            return redirect()->route('cart.index')->with('error', 'Dòng giỏ hàng không còn tồn tại.');
+        }
+
+        $probe = [
+            'line_type' => $line['line_type'],
+            'product_variant_id' => $line['product_variant_id'],
+            'quantity' => (int) $data['quantity'],
+            'rental_start' => $line['rental_start'] ?? null,
+            'rental_end' => $line['rental_end'] ?? null,
+        ];
+
+        if ($line['line_type'] === 'sale' && ! $this->qty->saleFits($this->cart->lines(), $probe, $lineId)) {
+            return back()->withErrors(['quantity' => 'Không còn đủ hàng bán cho số lượng này.']);
+        }
+
+        if ($line['line_type'] === 'rental' && ! $this->qty->rentalFits($this->cart->lines(), $probe, $lineId)) {
+            return back()->withErrors(['quantity' => 'Không còn đủ món thuê trống cho số lượng này.']);
+        }
+
+        $this->cart->updateQuantity($lineId, (int) $data['quantity']);
+
+        return redirect()->route('cart.index')->with('status', 'Đã cập nhật số lượng.');
+    }
+
+    public function updateVariant(Request $request, string $lineId): RedirectResponse
+    {
+        $data = $request->validate([
+            'product_variant_id' => ['required', 'integer', 'min:1'],
+        ], [
+            'product_variant_id.required' => 'Chọn biến thể sản phẩm.',
+        ]);
+
+        $line = collect($this->cart->lines())->first(fn (array $row) => (string) ($row['id'] ?? '') === $lineId);
+        if ($line === null) {
+            return redirect()->route('cart.index')->with('error', 'Dòng giỏ hàng không còn tồn tại.');
+        }
+
+        $probe = [
+            'line_type' => $line['line_type'],
+            'product_variant_id' => (int) $data['product_variant_id'],
+            'quantity' => max(1, (int) ($line['quantity'] ?? 1)),
+            'rental_start' => $line['rental_start'] ?? null,
+            'rental_end' => $line['rental_end'] ?? null,
+        ];
+
+        if ($line['line_type'] === 'sale' && ! $this->qty->saleFits($this->cart->lines(), $probe, $lineId)) {
+            return back()->withErrors(['product_variant_id' => 'Biến thể này không còn đủ hàng bán.']);
+        }
+
+        if ($line['line_type'] === 'rental' && ! $this->qty->rentalFits($this->cart->lines(), $probe, $lineId)) {
+            return back()->withErrors(['product_variant_id' => 'Biến thể này không còn đủ món thuê trống.']);
+        }
+
+        $this->cart->updateVariant($lineId, (int) $data['product_variant_id']);
+
+        return redirect()->route('cart.index')->with('status', 'Đã đổi biến thể sản phẩm.');
+    }
+
     public function remove(string $lineId): RedirectResponse
     {
         $this->cart->remove($lineId);

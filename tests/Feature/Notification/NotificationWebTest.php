@@ -3,9 +3,11 @@
 namespace Tests\Feature\Notification;
 
 use App\Domain\Inventory\Models\InventoryStock;
+use App\Domain\Notification\Enums\NotificationStatus;
 use App\Domain\Notification\Enums\NotificationType;
 use App\Domain\Notification\Mail\OutboundMail;
 use App\Domain\Notification\Models\Notification;
+use App\Domain\Notification\Services\NotificationWriter;
 use App\Domain\Order\Models\Order;
 use App\Domain\Product\Enums\OfferMode;
 use App\Domain\Product\Models\Product;
@@ -64,6 +66,7 @@ class NotificationWebTest extends TestCase
             'type' => NotificationType::OrderConfirmed->value,
             'status' => 'sent',
             'email' => $user->email,
+            'dedupe_key' => 'order_confirmed:'.$order->id,
         ]);
 
         Mail::assertSent(OutboundMail::class, function (OutboundMail $mail) use ($user, $order) {
@@ -91,7 +94,7 @@ class NotificationWebTest extends TestCase
         Mail::assertSent(OutboundMail::class, 1);
     }
 
-    public function test_artisan_rental_notify_is_idempotent(): void
+    public function test_artisan_rental_due_reminder_triggers_24h_ahead_and_is_idempotent(): void
     {
         Mail::fake();
         $this->travelTo('2026-09-04 08:00:00');
@@ -125,12 +128,21 @@ class NotificationWebTest extends TestCase
         $this->artisan('webthethao:notify-rentals', ['--date' => '2026-09-04'])
             ->assertSuccessful();
 
-        $this->assertTrue(
-            Notification::query()
-                ->where('type', NotificationType::RentalDueReminder)
-                ->where('payload->dedupe_key', 'rental_due:'.$due->id.':2026-09-05')
-                ->exists()
-        );
+        $dueKey = 'rental_due:'.$user->id.':'.$due->order_id.':2026-09-05';
+        $dueRow = Notification::query()
+            ->where('type', NotificationType::RentalDueReminder)
+            ->where('dedupe_key', $dueKey)
+            ->first();
+
+        $this->assertNotNull($dueRow);
+        $this->assertSame('emails.rental-due-reminder', $dueRow->payload['template'] ?? null);
+        $this->assertContains($due->id, $dueRow->payload['booking_ids'] ?? []);
+
+        Mail::assertSent(OutboundMail::class, function (OutboundMail $mail) use ($user) {
+            return $mail->hasTo($user->email)
+                && $mail->viewName === 'emails.rental-due-reminder'
+                && str_contains($mail->subjectLine, 'Nhắc hạn trả');
+        });
 
         $this->assertSame(BookingStatus::Overdue, $late->fresh()->status);
 
@@ -140,6 +152,114 @@ class NotificationWebTest extends TestCase
         $this->assertSame(2, Notification::query()->where('user_id', $user->id)->count());
 
         $this->travelBack();
+    }
+
+    public function test_due_reminder_skips_bookings_not_matching_lead_window(): void
+    {
+        Mail::fake();
+        $this->travelTo('2026-09-04 08:00:00');
+
+        $user = User::factory()->create();
+        RentalBooking::factory()->create([
+            'user_id' => $user->id,
+            'status' => BookingStatus::Active,
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-06',
+        ]);
+
+        $this->artisan('webthethao:notify-rentals', ['--date' => '2026-09-04'])
+            ->assertSuccessful();
+
+        $this->assertSame(
+            0,
+            Notification::query()->where('type', NotificationType::RentalDueReminder)->count()
+        );
+
+        $this->travelBack();
+    }
+
+    public function test_due_reminder_groups_same_order_end_date_into_one_email(): void
+    {
+        Mail::fake();
+        $this->travelTo('2026-09-04 08:00:00');
+
+        $user = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+        $first = RentalBooking::factory()->create([
+            'user_id' => $user->id,
+            'order_id' => $order->id,
+            'status' => BookingStatus::Active,
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-05',
+        ]);
+        $second = RentalBooking::factory()->create([
+            'user_id' => $user->id,
+            'order_id' => $order->id,
+            'status' => BookingStatus::Confirmed,
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-05',
+        ]);
+
+        $this->artisan('webthethao:notify-rentals', ['--date' => '2026-09-04'])
+            ->assertSuccessful();
+
+        $row = Notification::query()
+            ->where('type', NotificationType::RentalDueReminder)
+            ->where('dedupe_key', 'rental_due:'.$user->id.':'.$order->id.':2026-09-05')
+            ->first();
+
+        $this->assertNotNull($row);
+        $this->assertEqualsCanonicalizing(
+            [$first->id, $second->id],
+            $row->payload['booking_ids'] ?? []
+        );
+        $this->assertSame(1, Notification::query()->where('type', NotificationType::RentalDueReminder)->count());
+        Mail::assertSent(OutboundMail::class, 1);
+
+        $this->travelBack();
+    }
+
+    public function test_failed_notification_is_retried_on_next_enqueue(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        $row = Notification::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'type' => NotificationType::RentalDueReminder,
+            'status' => NotificationStatus::Failed,
+            'error_message' => 'SMTP down',
+            'dedupe_key' => 'rental_due:retry-test',
+            'payload' => [
+                'dedupe_key' => 'rental_due:retry-test',
+                'template' => 'emails.rental-due-reminder',
+                'template_data' => [
+                    'customerName' => $user->name,
+                    'orderId' => 1,
+                    'endDate' => '2026-09-05',
+                    'daysUntilDue' => 1,
+                    'items' => [],
+                    'scheduleUrl' => url('/don-cua-toi?tab=thue'),
+                ],
+            ],
+        ]);
+
+        $writer = app(NotificationWriter::class);
+        [$again, $created] = $writer->enqueueOnce(
+            $user->id,
+            $user->email,
+            NotificationType::RentalDueReminder,
+            'Nhắc lại',
+            'body',
+            ['dedupe_key' => 'rental_due:retry-test'],
+        );
+
+        $this->assertFalse($created);
+        $this->assertSame($row->id, $again->id);
+        $this->assertSame(NotificationStatus::Sent, $again->fresh()->status);
+        $this->assertSame(1, Notification::query()->count());
+        Mail::assertSent(OutboundMail::class, 1);
     }
 
     public function test_guest_cannot_see_notifications(): void

@@ -4,6 +4,7 @@ namespace App\Domain\Rental\Models;
 
 use App\Domain\Inventory\Models\InventoryItem;
 use App\Domain\Order\Models\Order;
+use App\Domain\Order\Models\OrderItem;
 use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Rental\Enums\BookingStatus;
 use App\Domain\User\Models\User;
@@ -58,6 +59,11 @@ class RentalBooking extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function orderItem(): BelongsTo
+    {
+        return $this->belongsTo(OrderItem::class, 'order_item_id');
     }
 
     public function item(): BelongsTo

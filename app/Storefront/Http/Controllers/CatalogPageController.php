@@ -2,6 +2,7 @@
 
 namespace App\Storefront\Http\Controllers;
 
+use App\Domain\Content\Models\HomeBanner;
 use App\Domain\Product\Http\Requests\CatalogProductIndexRequest;
 use App\Domain\Product\Services\CatalogService;
 use App\Domain\Review\Services\ReviewWriter;
@@ -23,6 +24,7 @@ class CatalogPageController extends Controller
             'categories' => $this->catalog->categories(),
             'products' => $this->catalog->products(['limit' => 8]),
             'bestSellers' => $this->catalog->bestSellers(8),
+            'bannerUrl' => HomeBanner::displayUrl(),
         ]);
     }
 

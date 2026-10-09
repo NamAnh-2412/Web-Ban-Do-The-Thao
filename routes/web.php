@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\HomeBannerController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -17,7 +18,7 @@ use App\Http\Controllers\Admin\SportController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Storefront\Http\Controllers\AuthPageController;
 use App\Storefront\Http\Controllers\PasswordResetController;
-use App\Storefront\Http\Controllers\RentalScheduleController;
+use App\Storefront\Http\Controllers\MyOrdersController;
 use App\Storefront\Http\Controllers\AvailabilityPageController;
 use App\Storefront\Http\Controllers\CartPageController;
 use App\Storefront\Http\Controllers\CatalogPageController;
@@ -56,6 +57,8 @@ Route::post('/thanh-toan/momo/ipn', [MomoCallbackController::class, 'ipn'])->nam
 Route::middleware('customer')->group(function () {
     Route::get('/gio-hang', [CartPageController::class, 'index'])->name('cart.index');
     Route::post('/gio-hang', [CartPageController::class, 'add'])->name('cart.add');
+    Route::patch('/gio-hang/{lineId}/so-luong', [CartPageController::class, 'updateQuantity'])->name('cart.quantity');
+    Route::patch('/gio-hang/{lineId}/bien-the', [CartPageController::class, 'updateVariant'])->name('cart.variant');
     Route::delete('/gio-hang/{lineId}', [CartPageController::class, 'remove'])->name('cart.remove');
 });
 
@@ -87,8 +90,9 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::put('/tai-khoan', [ProfilePageController::class, 'update'])->name('account.update');
     Route::get('/tin-nhan', [MessagePageController::class, 'show'])->name('messages.show');
     Route::post('/tin-nhan', [MessagePageController::class, 'store'])->name('messages.store');
-    Route::get('/lich-thue', [RentalScheduleController::class, 'index'])->name('rentals.schedule');
-    Route::get('/don-hang', [CheckoutPageController::class, 'orders'])->name('orders.index');
+    Route::get('/don-cua-toi', [MyOrdersController::class, 'index'])->name('my-orders.index');
+    Route::redirect('/don-hang', '/don-cua-toi?tab=mua')->name('orders.index');
+    Route::redirect('/lich-thue', '/don-cua-toi?tab=thue')->name('rentals.schedule');
     Route::get('/don-hang/{order}', [CheckoutPageController::class, 'orderShow'])->name('orders.show');
     Route::post('/don-hang/{order}/gia-han', [CheckoutPageController::class, 'requestExtension'])->name('orders.extensions.store');
     Route::get('/thong-bao', [NotificationPageController::class, 'index'])->name('notifications.index');
@@ -106,6 +110,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('sports', SportController::class)->except(['show']);
     Route::resource('products', AdminProductController::class)->except(['show']);
+    Route::get('/banner-trang-chu', [HomeBannerController::class, 'edit'])->name('home-banner.edit');
+    Route::put('/banner-trang-chu', [HomeBannerController::class, 'update'])->name('home-banner.update');
+    Route::delete('/banner-trang-chu', [HomeBannerController::class, 'destroy'])->name('home-banner.destroy');
 
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory/stocks', [InventoryController::class, 'upsertStock'])->name('inventory.stocks');

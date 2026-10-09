@@ -29,6 +29,9 @@
             <a class="admin-nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">
                 <i class="fas fa-box-open"></i><span>Sản phẩm</span>
             </a>
+            <a class="admin-nav-link {{ request()->routeIs('admin.home-banner.*') ? 'active' : '' }}" href="{{ route('admin.home-banner.edit') }}">
+                <i class="fas fa-image"></i><span>Banner trang chủ</span>
+            </a>
             <a class="admin-nav-link {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}" href="{{ route('admin.inventory.index') }}">
                 <i class="fas fa-warehouse"></i><span>Tồn kho / món thuê</span>
             </a>

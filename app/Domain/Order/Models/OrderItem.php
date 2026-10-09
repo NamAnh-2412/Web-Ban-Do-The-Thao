@@ -70,6 +70,32 @@ class OrderItem extends Model
         return $this->hasOne(Review::class);
     }
 
+    public function imageSrc(): ?string
+    {
+        if (! $this->image_url) {
+            return $this->product?->imageSrc();
+        }
+
+        if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
+            return $this->image_url;
+        }
+
+        if (str_starts_with($this->image_url, '/media/')) {
+            $relative = ltrim($this->image_url, '/');
+            if (! is_file(public_path($relative))) {
+                return null;
+            }
+
+            return asset($relative);
+        }
+
+        if (str_starts_with($this->image_url, '/')) {
+            return asset(ltrim($this->image_url, '/'));
+        }
+
+        return asset('storage/'.$this->image_url);
+    }
+
     protected static function newFactory(): OrderItemFactory
     {
         return OrderItemFactory::new();

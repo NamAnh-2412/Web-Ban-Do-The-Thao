@@ -2,6 +2,7 @@
 
 namespace App\Domain\Chat\Models;
 
+use App\Domain\Chat\Enums\ChatAttachmentType;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,12 +13,18 @@ class Message extends Model
         'conversation_id',
         'user_id',
         'body',
+        'attachment_type',
+        'attachment_id',
+        'attachment_payload',
         'read_at',
     ];
 
     protected function casts(): array
     {
         return [
+            'attachment_type' => ChatAttachmentType::class,
+            'attachment_id' => 'integer',
+            'attachment_payload' => 'array',
             'read_at' => 'datetime',
         ];
     }
@@ -35,5 +42,10 @@ class Message extends Model
     public function isFromStore(): bool
     {
         return $this->user?->isStoreAccount() ?? false;
+    }
+
+    public function hasAttachment(): bool
+    {
+        return $this->attachment_type !== null && is_array($this->attachment_payload);
     }
 }

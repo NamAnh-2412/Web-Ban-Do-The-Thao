@@ -51,8 +51,11 @@
                                     Giỏ <span class="cart-badge">{{ $cartCount ?? 0 }}</span>
                                 </a>
                             </li>
-                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" href="{{ route('orders.index') }}">Đơn hàng</a></li>
-                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('rentals.schedule') ? 'active' : '' }}" href="{{ route('rentals.schedule') }}">Lịch thuê</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('my-orders.*') || request()->routeIs('orders.show') || request()->routeIs('orders.index') || request()->routeIs('rentals.schedule') ? 'active' : '' }}" href="{{ route('my-orders.index') }}">
+                                    Đơn của tôi
+                                </a>
+                            </li>
                             <li class="nav-item"><a class="nav-link {{ request()->routeIs('account.*') ? 'active' : '' }}" href="{{ route('account.show') }}">Tài khoản</a></li>
                             <li class="nav-item">
                                 <a class="nav-link nav-cart {{ request()->routeIs('messages.*') ? 'active' : '' }}" href="{{ route('messages.show') }}">

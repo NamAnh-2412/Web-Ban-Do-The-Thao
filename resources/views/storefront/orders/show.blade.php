@@ -8,7 +8,7 @@
 @endphp
 
 @section('content')
-    <nav class="small mb-3"><a href="{{ route('orders.index') }}">Đơn hàng</a> / #{{ $order->id }}</nav>
+    <nav class="small mb-3"><a href="{{ route('my-orders.index') }}">Đơn của tôi</a> / #{{ $order->id }}</nav>
     <div class="policy-card mb-3">
         <h1 class="h4">Đơn #{{ $order->id }}
             <span class="badge text-bg-light">{{ $order->customerKindLabel() }}</span>

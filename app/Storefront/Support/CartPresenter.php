@@ -3,7 +3,12 @@
 namespace App\Storefront\Support;
 
 use App\Domain\Coupon\Services\CouponService;
+use App\Domain\Product\Enums\OfferMode;
+use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductVariant;
 use App\Gateway\Services\CheckoutOrchestrator;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -24,8 +29,16 @@ class CartPresenter
         $rental = 0.0;
         $deposit = 0.0;
         $viewLines = [];
+        $rawLines = $this->cart->lines();
+        $variantIds = collect($rawLines)->pluck('product_variant_id')->map(fn ($id) => (int) $id)->unique()->values();
+        /** @var Collection<int, ProductVariant> $variants */
+        $variants = ProductVariant::query()
+            ->with(['product.variants' => fn ($q) => $q->where('is_active', true)->orderBy('id')])
+            ->whereIn('id', $variantIds)
+            ->get()
+            ->keyBy('id');
 
-        foreach ($this->cart->lines() as $raw) {
+        foreach ($rawLines as $raw) {
             $item = $this->hydrate($raw);
             $qty = max(1, (int) ($raw['quantity'] ?? 1));
             $isRental = ($raw['line_type'] ?? '') === 'rental';
@@ -36,21 +49,29 @@ class CartPresenter
                 $depositAmount *= $qty;
             }
 
+            $variant = $variants->get((int) ($raw['product_variant_id'] ?? 0));
+            $product = $variant?->product;
+
             $viewLines[] = [
                 'id' => $raw['id'],
                 'line_type' => $raw['line_type'],
                 'product_variant_id' => $raw['product_variant_id'],
+                'product_id' => $product?->id,
+                'product_slug' => $product?->slug,
                 'quantity' => $qty,
                 'rental_start' => $raw['rental_start'] ?? null,
                 'rental_end' => $raw['rental_end'] ?? null,
-                'product_name' => $item['product_name'] ?? 'Không còn bán/thuê',
-                'sku' => $item['sku'] ?? '',
-                'size' => $item['size'] ?? null,
-                'color' => $item['color'] ?? null,
+                'rental_days' => $this->rentalDays($raw['rental_start'] ?? null, $raw['rental_end'] ?? null),
+                'product_name' => $item['product_name'] ?? ($product?->name ?? 'Không còn bán/thuê'),
+                'sku' => $item['sku'] ?? ($variant?->sku ?? ''),
+                'size' => $item['size'] ?? $variant?->size,
+                'color' => $item['color'] ?? $variant?->color,
+                'image_src' => $product?->imageSrc(),
                 'unit_price' => $item['unit_price'] ?? 0,
                 'deposit_amount' => $depositAmount,
                 'line_total' => $lineTotal,
                 'available' => $item !== null,
+                'variants' => $this->variantOptions($product, (string) ($raw['line_type'] ?? '')),
             ];
 
             if ($item === null) {
@@ -146,6 +167,58 @@ class CartPresenter
             ]]);
 
             return $prepared[0] ?? null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /** @return list<array{id: int, label: string, size: ?string, color: ?string}> */
+    private function variantOptions(?Product $product, string $lineType): array
+    {
+        if ($product === null) {
+            return [];
+        }
+
+        return $product->variants
+            ->filter(function (ProductVariant $variant) use ($lineType, $product) {
+                if (! $variant->is_active) {
+                    return false;
+                }
+                $mode = $product->offer_mode;
+                if ($lineType === 'sale') {
+                    return in_array($mode, [OfferMode::Sale, OfferMode::Both], true)
+                        && $variant->sale_price !== null;
+                }
+
+                return in_array($mode, [OfferMode::Rental, OfferMode::Both], true)
+                    && $variant->rental_price_per_day !== null;
+            })
+            ->map(function (ProductVariant $variant) {
+                $parts = array_filter([
+                    $variant->size ? 'Size '.$variant->size : null,
+                    $variant->color,
+                    $variant->sku,
+                ]);
+
+                return [
+                    'id' => $variant->id,
+                    'label' => implode(' · ', $parts) ?: ('Biến thể #'.$variant->id),
+                    'size' => $variant->size,
+                    'color' => $variant->color,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function rentalDays(mixed $start, mixed $end): ?int
+    {
+        if (! is_string($start) || ! is_string($end) || $start === '' || $end === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($start)->startOfDay()->diffInDays(Carbon::parse($end)->startOfDay()) + 1;
         } catch (Throwable) {
             return null;
         }

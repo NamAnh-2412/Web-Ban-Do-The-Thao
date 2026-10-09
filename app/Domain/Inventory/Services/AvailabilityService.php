@@ -5,7 +5,6 @@ namespace App\Domain\Inventory\Services;
 use App\Domain\Inventory\Enums\ItemStatus;
 use App\Domain\Inventory\Enums\ReservationStatus;
 use App\Domain\Inventory\Models\InventoryItem;
-use App\Domain\Inventory\Models\InventoryItemReservation;
 use App\Domain\Inventory\Models\InventoryStock;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -80,44 +79,5 @@ class AvailabilityService
             })
             ->orderBy('asset_code')
             ->get();
-    }
-
-    public function itemWindow(int $itemId, string $startDate, string $endDate): array
-    {
-        $start = Carbon::parse($startDate)->startOfDay();
-        $end = Carbon::parse($endDate)->startOfDay();
-
-        if ($end->lt($start)) {
-            throw ValidationException::withMessages([
-                'end_date' => ['Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'],
-            ]);
-        }
-
-        $item = InventoryItem::query()->find($itemId);
-
-        if ($item === null) {
-            return [
-                'inventory_item_id' => $itemId,
-                'available' => false,
-                'window_clear' => false,
-                'status' => null,
-            ];
-        }
-
-        $overlap = InventoryItemReservation::query()
-            ->where('inventory_item_id', $item->id)
-            ->whereIn('status', [ReservationStatus::Pending->value, ReservationStatus::Committed->value])
-            ->whereDate('start_date', '<=', $end->toDateString())
-            ->whereDate('end_date', '>=', $start->toDateString())
-            ->exists();
-
-        return [
-            'inventory_item_id' => $item->id,
-            'available' => $item->status === ItemStatus::Available && ! $overlap,
-            'window_clear' => ! $overlap,
-            'status' => $item->status->value,
-            'start_date' => $start->toDateString(),
-            'end_date' => $end->toDateString(),
-        ];
     }
 }

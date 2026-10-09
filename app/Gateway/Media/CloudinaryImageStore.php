@@ -16,10 +16,10 @@ class CloudinaryImageStore
             && $this->apiSecret() !== '';
     }
 
-    public function upload(UploadedFile $file): string
+    public function upload(UploadedFile $file, ?string $folder = null): string
     {
         $timestamp = time();
-        $folder = (string) config('services.cloudinary.folder', 'webthethao/products');
+        $folder = $folder ?: (string) config('services.cloudinary.folder', 'webthethao/products');
         $signed = [
             'folder' => $folder,
             'timestamp' => $timestamp,
